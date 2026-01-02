@@ -14,12 +14,18 @@ enum SampleDataSeeder {
 
         let habit = Habit(
             name: "Drink Water",
+            iconName: "drop",
+            colorName: "Blue",
             detail: "Stay hydrated throughout the day."
         )
         context.insert(habit)
 
         do {
             try context.save()
+            WidgetStoreSync.updateSnapshot(
+                context: context,
+                dayKey: DayKey.from(Date())
+            )
         } catch {
             assertionFailure("Failed to save sample habits: \(error)")
         }

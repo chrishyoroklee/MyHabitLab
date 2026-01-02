@@ -14,4 +14,8 @@ extension DateProvider {
     func today() -> Day {
         Day(start: calendar.startOfDay(for: now()))
     }
+
+    func dayKey() -> Int {
+        DayKey.from(now(), calendar: calendar, timeZone: calendar.timeZone)
+    }
 }
