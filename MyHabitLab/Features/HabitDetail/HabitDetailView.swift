@@ -1,11 +1,13 @@
 import SwiftUI
 import SwiftData
 import UserNotifications
+import Foundation
 
 struct HabitDetailView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
     @Bindable var habit: Habit
+    let dateProvider: DateProvider
 
     @State private var reminderTime: Date
     @State private var authorizationStatus: UNAuthorizationStatus = .notDetermined
@@ -13,8 +15,9 @@ struct HabitDetailView: View {
     @State private var isShowingDeniedAlert = false
     @State private var isShowingArchiveConfirm = false
 
-    init(habit: Habit) {
+    init(habit: Habit, dateProvider: DateProvider) {
         self.habit = habit
+        self.dateProvider = dateProvider
         var components = DateComponents()
         components.hour = habit.reminderHour
         components.minute = habit.reminderMinute
@@ -36,6 +39,16 @@ struct HabitDetailView: View {
                 Section("habit.detail.section.status") {
                     Toggle("habit.detail.toggle.archived", isOn: archiveBinding)
                         .accessibilityLabel(Text("habit.detail.toggle.archived"))
+                }
+
+                Section("habit.detail.section.history") {
+                    Text("habit.detail.history.last_90_days")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                    HabitHistoryGridView(
+                        entries: historyEntries,
+                        completedDayKeys: completedDayKeys
+                    )
                 }
             }
             .navigationTitle(habit.name)
@@ -140,6 +153,19 @@ struct HabitDetailView: View {
         Task { await persistAndSchedule() }
     }
 
+    private var historyEntries: [DayKeyEntry] {
+        DayKeyRange.lastNDays(
+            endingOn: dateProvider.now(),
+            count: 90,
+            calendar: dateProvider.calendar,
+            timeZone: dateProvider.calendar.timeZone
+        )
+    }
+
+    private var completedDayKeys: Set<Int> {
+        Set(habit.completions.map { $0.dayKey })
+    }
+
     @MainActor
     private func persistAndSchedule() async {
         do {
@@ -148,5 +174,30 @@ struct HabitDetailView: View {
             assertionFailure("Failed to save habit reminder: \(error)")
         }
         await ReminderScheduler.update(for: habit)
+    }
+}
+
+private struct HabitHistoryGridView: View {
+    let entries: [DayKeyEntry]
+    let completedDayKeys: Set<Int>
+
+    private let columns = Array(repeating: GridItem(.flexible(), spacing: 6), count: 7)
+
+    var body: some View {
+        LazyVGrid(columns: columns, spacing: 6) {
+            ForEach(entries) { entry in
+                let isCompleted = completedDayKeys.contains(entry.dayKey)
+                RoundedRectangle(cornerRadius: 3)
+                    .fill(isCompleted ? Color.green.opacity(0.8) : Color.secondary.opacity(0.2))
+                    .frame(height: 14)
+                    .accessibilityLabel(Text(accessibilityLabel(for: entry)))
+                    .accessibilityValue(Text(isCompleted ? "calendar.accessibility.completed" : "calendar.accessibility.not_completed"))
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private func accessibilityLabel(for entry: DayKeyEntry) -> String {
+        entry.date.formatted(.dateTime.weekday(.abbreviated).month().day().year())
     }
 }

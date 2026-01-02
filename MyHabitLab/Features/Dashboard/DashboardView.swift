@@ -82,7 +82,7 @@ struct DashboardView: View {
                 HabitCalendarEditorView(habit: habit, dateProvider: dateProvider)
             }
             .sheet(item: $detailHabit) { habit in
-                HabitDetailView(habit: habit)
+                HabitDetailView(habit: habit, dateProvider: dateProvider)
             }
             .task {
                 refreshCompletions()

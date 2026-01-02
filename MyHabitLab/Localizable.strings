@@ -39,6 +39,8 @@
 "habit.detail.section.reminder" = "Reminder";
 "habit.detail.section.status" = "Status";
 "habit.detail.toggle.archived" = "Archived";
+"habit.detail.section.history" = "History";
+"habit.detail.history.last_90_days" = "Last 90 Days";
 "habit.detail.alert.archive_title" = "Archive Habit?";
 "habit.detail.alert.archive_message" = "Archived habits are hidden from the dashboard.";
 "habit.detail.action.archive" = "Archive";
