@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import UserNotifications
 
 struct NewHabitSheet: View {
     @Environment(\.dismiss) private var dismiss
@@ -9,6 +10,16 @@ struct NewHabitSheet: View {
     @State private var iconName: String = HabitIconOptions.defaultName()
     @State private var colorName: String = HabitPalette.defaultName()
     @State private var note: String = ""
+    @State private var reminderEnabled: Bool = false
+    @State private var reminderTime: Date = {
+        var components = DateComponents()
+        components.hour = 9
+        components.minute = 0
+        return Calendar.current.date(from: components) ?? Date()
+    }()
+    @State private var authorizationStatus: UNAuthorizationStatus = .notDetermined
+    @State private var isShowingPermissionAlert = false
+    @State private var isShowingDeniedAlert = false
 
     var body: some View {
         NavigationStack {
@@ -38,6 +49,13 @@ struct NewHabitSheet: View {
                     }
                 }
 
+                Section("Reminder") {
+                    Toggle("Daily Reminder", isOn: $reminderEnabled)
+                    if reminderEnabled {
+                        DatePicker("Time", selection: $reminderTime, displayedComponents: .hourAndMinute)
+                    }
+                }
+
                 Section("Note") {
                     TextField("Optional note", text: $note, axis: .vertical)
                         .lineLimit(3, reservesSpace: true)
@@ -57,6 +75,40 @@ struct NewHabitSheet: View {
                     .disabled(isSaveDisabled)
                 }
             }
+            .task {
+                authorizationStatus = await ReminderScheduler.authorizationStatus()
+            }
+            .onChange(of: reminderEnabled) { _, newValue in
+                guard newValue else { return }
+                if authorizationStatus == .notDetermined {
+                    isShowingPermissionAlert = true
+                } else if authorizationStatus == .denied {
+                    isShowingDeniedAlert = true
+                    reminderEnabled = false
+                }
+            }
+            .alert("Enable Notifications?", isPresented: $isShowingPermissionAlert) {
+                Button("Not Now", role: .cancel) {
+                    reminderEnabled = false
+                }
+                Button("Allow") {
+                    Task {
+                        let granted = await ReminderScheduler.requestAuthorization()
+                        authorizationStatus = await ReminderScheduler.authorizationStatus()
+                        if granted == false {
+                            reminderEnabled = false
+                            isShowingDeniedAlert = true
+                        }
+                    }
+                }
+            } message: {
+                Text("Allow notifications so we can send daily habit reminders.")
+            }
+            .alert("Notifications Disabled", isPresented: $isShowingDeniedAlert) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text("Enable notifications in Settings to receive reminders.")
+            }
         }
     }
 
@@ -68,11 +120,17 @@ struct NewHabitSheet: View {
         let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedName.isEmpty else { return }
         let trimmedNote = note.trimmingCharacters(in: .whitespacesAndNewlines)
+        let timeComponents = Calendar.current.dateComponents([.hour, .minute], from: reminderTime)
+        let reminderHour = timeComponents.hour ?? 9
+        let reminderMinute = timeComponents.minute ?? 0
         let habit = Habit(
             name: trimmedName,
             iconName: iconName,
             colorName: colorName,
-            detail: trimmedNote.isEmpty ? nil : trimmedNote
+            detail: trimmedNote.isEmpty ? nil : trimmedNote,
+            reminderEnabled: reminderEnabled,
+            reminderHour: reminderHour,
+            reminderMinute: reminderMinute
         )
         modelContext.insert(habit)
         do {
@@ -81,6 +139,9 @@ struct NewHabitSheet: View {
                 context: modelContext,
                 dayKey: DayKey.from(Date())
             )
+            Task {
+                await ReminderScheduler.update(for: habit)
+            }
             dismiss()
         } catch {
             assertionFailure("Failed to save habit: \(error)")
