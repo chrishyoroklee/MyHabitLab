@@ -8,17 +8,26 @@
 import SwiftUI
 
 struct ContentView: View {
+    let dateProvider: DateProvider
+
     var body: some View {
-        VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
-            Text("MyHabitLab!")
+        TabView {
+            DashboardView(dateProvider: dateProvider)
+                .tabItem {
+                    Label("tab.dashboard", systemImage: "square.grid.2x2")
+                }
+            StatsView(dateProvider: dateProvider)
+                .tabItem {
+                    Label("tab.stats", systemImage: "chart.bar")
+                }
+            SettingsView()
+                .tabItem {
+                    Label("tab.settings", systemImage: "gearshape")
+                }
         }
-        .padding()
     }
 }
 
 #Preview {
-    ContentView()
+    ContentView(dateProvider: .live)
 }

@@ -1,0 +1,125 @@
+/* Tabs */
+"tab.dashboard" = "Dashboard";
+"tab.stats" = "Stats";
+"tab.settings" = "Settings";
+
+/* Dashboard */
+"dashboard.title" = "Dashboard";
+"dashboard.no_habits_title" = "No Habits Yet";
+"dashboard.no_habits_message" = "Create a habit to start tracking today.";
+"dashboard.section.today" = "Today";
+"dashboard.action.new_habit" = "New Habit";
+"dashboard.action.edit_history" = "Edit history";
+"dashboard.action.edit_habit" = "Edit habit";
+"dashboard.accessibility.mark_completed" = "Mark completed";
+"dashboard.accessibility.mark_not_completed" = "Mark not completed";
+
+/* Calendar editor */
+"calendar.last_90_days" = "Last 90 Days";
+"calendar.done" = "Done";
+"calendar.accessibility.completed" = "Completed";
+"calendar.accessibility.not_completed" = "Not completed";
+
+/* Habit creation */
+"habit.new.title" = "New Habit";
+"habit.section.basics" = "Basics";
+"habit.field.name" = "Name";
+"habit.field.icon" = "Icon";
+"habit.section.color" = "Color";
+"habit.section.reminder" = "Reminder";
+"habit.field.reminder_toggle" = "Daily Reminder";
+"habit.field.reminder_time" = "Time";
+"habit.section.note" = "Note";
+"habit.field.note_placeholder" = "Optional note";
+"action.cancel" = "Cancel";
+"action.save" = "Save";
+"action.ok" = "OK";
+
+/* Habit detail */
+"habit.detail.section.reminder" = "Reminder";
+"habit.detail.section.status" = "Status";
+"habit.detail.toggle.archived" = "Archived";
+"habit.detail.section.history" = "History";
+"habit.detail.history.last_90_days" = "Last 90 Days";
+"habit.detail.alert.archive_title" = "Archive Habit?";
+"habit.detail.alert.archive_message" = "Archived habits are hidden from the dashboard.";
+"habit.detail.action.archive" = "Archive";
+"habit.detail.action.done" = "Done";
+
+/* Notifications */
+"permission.notifications.title" = "Enable Notifications?";
+"permission.notifications.message" = "Allow notifications so we can send daily habit reminders.";
+"permission.notifications.allow" = "Allow";
+"permission.notifications.not_now" = "Not Now";
+"permission.notifications.denied_title" = "Notifications Disabled";
+"permission.notifications.denied_message" = "Enable notifications in Settings to receive reminders.";
+"notification.reminder_body" = "Time to complete your habit.";
+
+/* Icons */
+"icon.check" = "Check";
+"icon.water" = "Water";
+"icon.reading" = "Reading";
+"icon.workout" = "Workout";
+"icon.wellness" = "Wellness";
+"icon.health" = "Health";
+"icon.walk" = "Walk";
+"icon.energy" = "Energy";
+"icon.music" = "Music";
+"icon.habit" = "Habit";
+
+/* Colors */
+"color.blue" = "Blue";
+"color.green" = "Green";
+"color.orange" = "Orange";
+"color.pink" = "Pink";
+"color.teal" = "Teal";
+"color.indigo" = "Indigo";
+
+/* Settings */
+"settings.title" = "Settings";
+"settings.section.data" = "Data";
+"settings.action.export" = "Export Data";
+"settings.action.import" = "Import Data";
+"settings.section.habits" = "Habits";
+"settings.no_archived" = "No archived habits.";
+"settings.action.restore" = "Restore";
+"settings.section.about" = "About";
+"settings.about.version" = "Version";
+"settings.alert.title" = "Export / Import";
+"settings.import.complete" = "Import complete.";
+"settings.export.filename" = "MyHabitLab-export";
+
+/* Stats */
+"stats.title" = "Stats";
+"stats.empty.title" = "No Stats Yet";
+"stats.empty.message" = "Create a habit to see progress stats.";
+"stats.summary.week" = "This Week";
+"stats.summary.completions" = "%d completions";
+"stats.card.current" = "Current";
+"stats.card.longest" = "Longest";
+"stats.card.thirty_days" = "30 Days";
+"stats.rate.format" = "%d%%";
+
+/* Errors */
+"error.export_failed" = "Export failed: %@";
+"error.import_failed" = "Import failed: %@";
+"error.restore_failed" = "Failed to restore habit: %@";
+"error.habit_not_found" = "Habit not found.";
+
+/* Shortcuts */
+"shortcut.habit.type" = "Habit";
+"shortcut.toggle.title" = "Toggle Habit Completion";
+"shortcut.toggle.description" = "Toggle today's completion for a habit.";
+"shortcut.toggle.parameter" = "Habit";
+"shortcut.toggle.completed" = "Marked completed.";
+"shortcut.toggle.not_completed" = "Marked not completed.";
+"shortcut.toggle.short_title" = "Toggle Habit";
+"shortcut.phrase.toggle_app %@" = "Toggle %@ habit";
+"shortcut.phrase.mark_in_app %@" = "Mark habit in %@";
+"shortcut.phrase.app_completion %@" = "%@ habit completion";
+
+/* Sample data */
+"sample.habit.drink_water.title" = "Drink Water";
+"sample.habit.drink_water.detail" = "Stay hydrated throughout the day.";
+"sample.habit.read.title" = "Read 10 Pages";
+"sample.habit.read.detail" = "A small daily reading goal.";

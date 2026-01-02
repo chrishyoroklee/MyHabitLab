@@ -1,0 +1,9 @@
+"widget.display_name" = "MyHabitLab";
+"widget.description" = "Track today's habits at a glance.";
+"widget.today" = "Today";
+"widget.intent.toggle.title" = "Toggle Habit Completion";
+"widget.intent.toggle.description" = "Toggle today's completion for a habit.";
+"widget.intent.toggle.parameter" = "Habit ID";
+"widget.sample.drink_water" = "Drink Water";
+"widget.sample.read" = "Read";
+"widget.sample.walk" = "Walk";
