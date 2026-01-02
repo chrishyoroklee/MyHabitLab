@@ -24,21 +24,24 @@ struct HabitDetailView: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section("Reminder") {
-                    Toggle("Daily Reminder", isOn: $habit.reminderEnabled)
+                Section("habit.detail.section.reminder") {
+                    Toggle("habit.field.reminder_toggle", isOn: $habit.reminderEnabled)
+                        .accessibilityLabel(Text("habit.field.reminder_toggle"))
                     if habit.reminderEnabled {
-                        DatePicker("Time", selection: $reminderTime, displayedComponents: .hourAndMinute)
+                        DatePicker("habit.field.reminder_time", selection: $reminderTime, displayedComponents: .hourAndMinute)
+                            .accessibilityLabel(Text("habit.field.reminder_time"))
                     }
                 }
 
-                Section("Status") {
-                    Toggle("Archived", isOn: archiveBinding)
+                Section("habit.detail.section.status") {
+                    Toggle("habit.detail.toggle.archived", isOn: archiveBinding)
+                        .accessibilityLabel(Text("habit.detail.toggle.archived"))
                 }
             }
             .navigationTitle(habit.name)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Done") {
+                    Button("habit.detail.action.done") {
                         dismiss()
                     }
                 }
@@ -52,11 +55,11 @@ struct HabitDetailView: View {
             .onChange(of: reminderTime) { _, _ in
                 updateReminderTime()
             }
-            .alert("Enable Notifications?", isPresented: $isShowingPermissionAlert) {
-                Button("Not Now", role: .cancel) {
+            .alert("permission.notifications.title", isPresented: $isShowingPermissionAlert) {
+                Button("permission.notifications.not_now", role: .cancel) {
                     habit.reminderEnabled = false
                 }
-                Button("Allow") {
+                Button("permission.notifications.allow") {
                     Task {
                         let granted = await ReminderScheduler.requestAuthorization()
                         authorizationStatus = await ReminderScheduler.authorizationStatus()
@@ -68,15 +71,15 @@ struct HabitDetailView: View {
                     }
                 }
             } message: {
-                Text("Allow notifications so we can send daily habit reminders.")
+                Text("permission.notifications.message")
             }
-            .alert("Notifications Disabled", isPresented: $isShowingDeniedAlert) {
-                Button("OK", role: .cancel) {}
+            .alert("permission.notifications.denied_title", isPresented: $isShowingDeniedAlert) {
+                Button("action.ok", role: .cancel) {}
             } message: {
-                Text("Enable notifications in Settings to receive reminders.")
+                Text("permission.notifications.denied_message")
             }
-            .confirmationDialog("Archive Habit?", isPresented: $isShowingArchiveConfirm) {
-                Button("Archive", role: .destructive) {
+            .confirmationDialog("habit.detail.alert.archive_title", isPresented: $isShowingArchiveConfirm) {
+                Button("habit.detail.action.archive", role: .destructive) {
                     habit.isArchived = true
                     Task {
                         await persistAndSchedule()
@@ -87,9 +90,9 @@ struct HabitDetailView: View {
                         dismiss()
                     }
                 }
-                Button("Cancel", role: .cancel) {}
+                Button("action.cancel", role: .cancel) {}
             } message: {
-                Text("Archived habits are hidden from the dashboard.")
+                Text("habit.detail.alert.archive_message")
             }
         }
     }

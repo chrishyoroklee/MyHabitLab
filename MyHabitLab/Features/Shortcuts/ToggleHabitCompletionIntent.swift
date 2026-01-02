@@ -1,10 +1,11 @@
 import AppIntents
+import Foundation
 
 struct ToggleHabitCompletionIntent: AppIntent {
-    static var title: LocalizedStringResource = "Toggle Habit Completion"
-    static var description = IntentDescription("Toggle today's completion for a habit.")
+    static var title: LocalizedStringResource = "shortcut.toggle.title"
+    static var description = IntentDescription("shortcut.toggle.description")
 
-    @Parameter(title: "Habit")
+    @Parameter(title: "shortcut.toggle.parameter")
     var habit: HabitEntity
 
     init() {}
@@ -18,7 +19,9 @@ struct ToggleHabitCompletionIntent: AppIntent {
             try HabitToggleService.toggleCompletion(habitId: habit.id)
         }
 
-        let message = didComplete ? "Marked completed." : "Marked not completed."
+        let message = didComplete
+            ? String(localized: "shortcut.toggle.completed")
+            : String(localized: "shortcut.toggle.not_completed")
         return .result(dialog: IntentDialog(stringLiteral: message))
     }
 }

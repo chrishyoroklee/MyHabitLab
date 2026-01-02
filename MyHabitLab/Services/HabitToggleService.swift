@@ -39,7 +39,7 @@ enum HabitIntentError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .habitNotFound:
-            return "Habit not found."
+            return String(localized: "error.habit_not_found")
         }
     }
 }

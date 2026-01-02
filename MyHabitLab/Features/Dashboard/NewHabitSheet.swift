@@ -24,10 +24,11 @@ struct NewHabitSheet: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section("Basics") {
-                    TextField("Name", text: $name)
+                Section("habit.section.basics") {
+                    TextField("habit.field.name", text: $name)
                         .textInputAutocapitalization(.words)
-                    Picker("Icon", selection: $iconName) {
+                        .accessibilityLabel(Text("habit.field.name"))
+                    Picker("habit.field.icon", selection: $iconName) {
                         ForEach(HabitIconOptions.names, id: \.self) { icon in
                             Label(iconTitle(icon), systemImage: icon)
                                 .tag(icon)
@@ -35,41 +36,44 @@ struct NewHabitSheet: View {
                     }
                 }
 
-                Section("Color") {
-                    Picker("Color", selection: $colorName) {
+                Section("habit.section.color") {
+                    Picker("habit.section.color", selection: $colorName) {
                         ForEach(HabitPalette.options) { option in
                             HStack {
                                 Circle()
                                     .fill(option.color)
                                     .frame(width: 12, height: 12)
-                                Text(option.name)
+                                Text(HabitPalette.displayNameKey(for: option.name))
                             }
                             .tag(option.name)
                         }
                     }
                 }
 
-                Section("Reminder") {
-                    Toggle("Daily Reminder", isOn: $reminderEnabled)
+                Section("habit.section.reminder") {
+                    Toggle("habit.field.reminder_toggle", isOn: $reminderEnabled)
+                        .accessibilityLabel(Text("habit.field.reminder_toggle"))
                     if reminderEnabled {
-                        DatePicker("Time", selection: $reminderTime, displayedComponents: .hourAndMinute)
+                        DatePicker("habit.field.reminder_time", selection: $reminderTime, displayedComponents: .hourAndMinute)
+                            .accessibilityLabel(Text("habit.field.reminder_time"))
                     }
                 }
 
-                Section("Note") {
-                    TextField("Optional note", text: $note, axis: .vertical)
+                Section("habit.section.note") {
+                    TextField("habit.field.note_placeholder", text: $note, axis: .vertical)
                         .lineLimit(3, reservesSpace: true)
+                        .accessibilityLabel(Text("habit.field.note_placeholder"))
                 }
             }
-            .navigationTitle("New Habit")
+            .navigationTitle("habit.new.title")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") {
+                    Button("action.cancel") {
                         dismiss()
                     }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Save") {
+                    Button("action.save") {
                         saveHabit()
                     }
                     .disabled(isSaveDisabled)
@@ -87,11 +91,11 @@ struct NewHabitSheet: View {
                     reminderEnabled = false
                 }
             }
-            .alert("Enable Notifications?", isPresented: $isShowingPermissionAlert) {
-                Button("Not Now", role: .cancel) {
+            .alert("permission.notifications.title", isPresented: $isShowingPermissionAlert) {
+                Button("permission.notifications.not_now", role: .cancel) {
                     reminderEnabled = false
                 }
-                Button("Allow") {
+                Button("permission.notifications.allow") {
                     Task {
                         let granted = await ReminderScheduler.requestAuthorization()
                         authorizationStatus = await ReminderScheduler.authorizationStatus()
@@ -102,12 +106,12 @@ struct NewHabitSheet: View {
                     }
                 }
             } message: {
-                Text("Allow notifications so we can send daily habit reminders.")
+                Text("permission.notifications.message")
             }
-            .alert("Notifications Disabled", isPresented: $isShowingDeniedAlert) {
-                Button("OK", role: .cancel) {}
+            .alert("permission.notifications.denied_title", isPresented: $isShowingDeniedAlert) {
+                Button("action.ok", role: .cancel) {}
             } message: {
-                Text("Enable notifications in Settings to receive reminders.")
+                Text("permission.notifications.denied_message")
             }
         }
     }
@@ -148,18 +152,18 @@ struct NewHabitSheet: View {
         }
     }
 
-    private func iconTitle(_ icon: String) -> String {
+    private func iconTitle(_ icon: String) -> LocalizedStringKey {
         switch icon {
-        case "checkmark.circle": return "Check"
-        case "drop": return "Water"
-        case "book": return "Reading"
-        case "flame": return "Workout"
-        case "leaf": return "Wellness"
-        case "heart": return "Health"
-        case "figure.walk": return "Walk"
-        case "bolt": return "Energy"
-        case "music.note": return "Music"
-        default: return "Habit"
+        case "checkmark.circle": return "icon.check"
+        case "drop": return "icon.water"
+        case "book": return "icon.reading"
+        case "flame": return "icon.workout"
+        case "leaf": return "icon.wellness"
+        case "heart": return "icon.health"
+        case "figure.walk": return "icon.walk"
+        case "bolt": return "icon.energy"
+        case "music.note": return "icon.music"
+        default: return "icon.habit"
         }
     }
 }

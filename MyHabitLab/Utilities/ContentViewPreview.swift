@@ -1,20 +1,21 @@
 import SwiftUI
 import SwiftData
+import Foundation
 
 #Preview("ContentView with Data") {
     let container = ModelContainerFactory.makePreviewContainer()
     let context = container.mainContext
     let habitOne = Habit(
-        name: "Drink Water",
+        name: String(localized: "sample.habit.drink_water.title"),
         iconName: "drop",
         colorName: "Blue",
-        detail: "Stay hydrated throughout the day."
+        detail: String(localized: "sample.habit.drink_water.detail")
     )
     let habitTwo = Habit(
-        name: "Read 10 Pages",
+        name: String(localized: "sample.habit.read.title"),
         iconName: "book",
         colorName: "Indigo",
-        detail: "A small daily reading goal."
+        detail: String(localized: "sample.habit.read.detail")
     )
     context.insert(habitOne)
     context.insert(habitTwo)

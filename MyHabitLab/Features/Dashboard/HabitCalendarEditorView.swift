@@ -12,7 +12,7 @@ struct HabitCalendarEditorView: View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
-                    Text("Last 90 Days")
+                    Text("calendar.last_90_days")
                         .font(.headline)
 
                     LazyVGrid(columns: gridColumns, spacing: 8) {
@@ -24,7 +24,7 @@ struct HabitCalendarEditorView: View {
                             }
                             .buttonStyle(.plain)
                             .accessibilityLabel(accessibilityLabel(for: cell))
-                            .accessibilityValue(isCompleted(cell) ? "Completed" : "Not completed")
+                            .accessibilityValue(Text(isCompleted(cell) ? "calendar.accessibility.completed" : "calendar.accessibility.not_completed"))
                         }
                     }
                 }
@@ -33,7 +33,7 @@ struct HabitCalendarEditorView: View {
             .navigationTitle(habit.name)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Done") {
+                    Button("calendar.done") {
                         dismiss()
                     }
                 }
@@ -111,6 +111,7 @@ private struct DayCellView: View {
                 .fill(isCompleted ? Color.green.opacity(0.7) : Color.secondary.opacity(0.2))
             Text(dayNumber)
                 .font(.caption2)
+                .minimumScaleFactor(0.6)
                 .foregroundStyle(isCompleted ? .white : .primary)
         }
         .frame(height: 32)

@@ -1,4 +1,5 @@
 import SwiftData
+import Foundation
 
 enum SampleDataSeeder {
     static func seedIfNeeded(context: ModelContext) {
@@ -13,10 +14,10 @@ enum SampleDataSeeder {
         }
 
         let habit = Habit(
-            name: "Drink Water",
+            name: String(localized: "sample.habit.drink_water.title"),
             iconName: "drop",
             colorName: "Blue",
-            detail: "Stay hydrated throughout the day."
+            detail: String(localized: "sample.habit.drink_water.detail")
         )
         context.insert(habit)
 

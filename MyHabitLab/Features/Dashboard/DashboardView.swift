@@ -3,6 +3,8 @@ import SwiftData
 
 struct DashboardView: View {
     let dateProvider: DateProvider
+    @Environment(\.modelContext) private var modelContext
+    @Environment(\.scenePhase) private var scenePhase
     @Query(
         filter: #Predicate<Habit> { habit in
             habit.isArchived == false
@@ -13,17 +15,19 @@ struct DashboardView: View {
     @State private var isPresentingNewHabit = false
     @State private var editingHabit: Habit?
     @State private var detailHabit: Habit?
+    @State private var todayKey: Int = 0
+    @State private var completionByHabitId: [UUID: Completion] = [:]
 
     var body: some View {
         let today = dateProvider.today()
-        let dayKey = dateProvider.dayKey()
+        let dayKey = todayKey == 0 ? dateProvider.dayKey() : todayKey
         return NavigationStack {
             Group {
                 if habits.isEmpty {
                     ContentUnavailableView(
-                        "No Habits Yet",
+                        "dashboard.no_habits_title",
                         systemImage: "checkmark.circle",
-                        description: Text("Create a habit to start tracking today.")
+                        description: Text("dashboard.no_habits_message")
                     )
                 } else {
                     List {
@@ -31,7 +35,10 @@ struct DashboardView: View {
                             ForEach(habits) { habit in
                                 HabitRow(
                                     habit: habit,
-                                    dayKey: dayKey,
+                                    isCompleted: completionByHabitId[habit.id] != nil,
+                                    onToggle: {
+                                        toggleCompletion(for: habit, dayKey: dayKey)
+                                    },
                                     onShowHistory: {
                                         editingHabit = habit
                                     },
@@ -42,7 +49,7 @@ struct DashboardView: View {
                             }
                         } header: {
                             VStack(alignment: .leading, spacing: 4) {
-                                Text("Today")
+                                Text("dashboard.section.today")
                                     .font(.headline)
                                 Text(today.displayTitle)
                                     .font(.subheadline)
@@ -53,7 +60,7 @@ struct DashboardView: View {
                     }
                 }
             }
-            .navigationTitle("Dashboard")
+            .navigationTitle("dashboard.title")
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
@@ -61,83 +68,63 @@ struct DashboardView: View {
                     } label: {
                         Image(systemName: "plus")
                     }
-                    .accessibilityLabel("New Habit")
+                    .accessibilityLabel(Text("dashboard.action.new_habit"))
                 }
             }
-            .sheet(isPresented: $isPresentingNewHabit) {
+            .sheet(isPresented: $isPresentingNewHabit, onDismiss: {
+                refreshCompletions()
+            }) {
                 NewHabitSheet()
             }
-            .sheet(item: $editingHabit) { habit in
+            .sheet(item: $editingHabit, onDismiss: {
+                refreshCompletions()
+            }) { habit in
                 HabitCalendarEditorView(habit: habit, dateProvider: dateProvider)
             }
             .sheet(item: $detailHabit) { habit in
                 HabitDetailView(habit: habit)
             }
+            .task {
+                refreshCompletions()
+            }
+            .onChange(of: scenePhase) { _, newValue in
+                guard newValue == .active else { return }
+                refreshCompletions()
+            }
         }
     }
-}
 
-struct HabitRow: View {
-    let habit: Habit
-    let dayKey: Int
-    let onShowHistory: () -> Void
-    let onShowDetail: () -> Void
-    @Environment(\.modelContext) private var modelContext
-
-    var body: some View {
-        HStack(spacing: 12) {
-            HabitIconView(
-                name: habit.name,
-                iconName: habit.iconName,
-                colorName: habit.colorName
-            )
-            Text(habit.name)
-            Spacer()
-            Button {
-                toggleCompletion()
-            } label: {
-                Image(systemName: isCompleted ? "checkmark.circle.fill" : "circle")
-                    .imageScale(.large)
-                    .foregroundStyle(isCompleted ? .green : .secondary)
+    @MainActor
+    private func refreshCompletions() {
+        let dayKey = dateProvider.dayKey()
+        todayKey = dayKey
+        var descriptor = FetchDescriptor<Completion>(
+            predicate: #Predicate<Completion> { completion in
+                completion.dayKey == dayKey
             }
-            .buttonStyle(.plain)
-            .accessibilityLabel(isCompleted ? "Mark not completed" : "Mark completed")
-            Button {
-                onShowHistory()
-            } label: {
-                Image(systemName: "calendar")
-                    .imageScale(.medium)
-                    .foregroundStyle(.secondary)
+        )
+        do {
+            let completions = try modelContext.fetch(descriptor)
+            var map: [UUID: Completion] = [:]
+            for completion in completions {
+                guard let habitId = completion.habit?.id else { continue }
+                map[habitId] = completion
             }
-            .buttonStyle(.plain)
-            .accessibilityLabel("Edit history")
-            Button {
-                onShowDetail()
-            } label: {
-                Image(systemName: "info.circle")
-                    .imageScale(.medium)
-                    .foregroundStyle(.secondary)
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel("Edit habit")
+            completionByHabitId = map
+        } catch {
+            assertionFailure("Failed to fetch today's completions: \(error)")
         }
-        .contentShape(Rectangle())
     }
 
-    private var isCompleted: Bool {
-        completionForToday != nil
-    }
-
-    private var completionForToday: Completion? {
-        habit.completions.first { $0.dayKey == dayKey }
-    }
-
-    private func toggleCompletion() {
-        if let completion = completionForToday {
-            modelContext.delete(completion)
+    @MainActor
+    private func toggleCompletion(for habit: Habit, dayKey: Int) {
+        if let existing = completionByHabitId[habit.id] {
+            modelContext.delete(existing)
+            completionByHabitId[habit.id] = nil
         } else {
             let completion = Completion(habit: habit, dayKey: dayKey, value: 1)
             modelContext.insert(completion)
+            completionByHabitId[habit.id] = completion
         }
 
         do {
@@ -149,6 +136,57 @@ struct HabitRow: View {
         } catch {
             assertionFailure("Failed to toggle completion: \(error)")
         }
+    }
+}
+
+struct HabitRow: View {
+    let habit: Habit
+    let isCompleted: Bool
+    let onToggle: () -> Void
+    let onShowHistory: () -> Void
+    let onShowDetail: () -> Void
+
+    var body: some View {
+        HStack(spacing: 12) {
+            HabitIconView(
+                name: habit.name,
+                iconName: habit.iconName,
+                colorName: habit.colorName
+            )
+            Text(habit.name)
+                .lineLimit(2)
+                .layoutPriority(1)
+            Spacer()
+            Button {
+                onToggle()
+            } label: {
+                Image(systemName: isCompleted ? "checkmark.circle.fill" : "circle")
+                    .imageScale(.large)
+                    .foregroundStyle(isCompleted ? .green : .secondary)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(Text(isCompleted ? "dashboard.accessibility.mark_not_completed" : "dashboard.accessibility.mark_completed"))
+            .accessibilityValue(Text(isCompleted ? "calendar.accessibility.completed" : "calendar.accessibility.not_completed"))
+            Button {
+                onShowHistory()
+            } label: {
+                Image(systemName: "calendar")
+                    .imageScale(.medium)
+                    .foregroundStyle(.secondary)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(Text("dashboard.action.edit_history"))
+            Button {
+                onShowDetail()
+            } label: {
+                Image(systemName: "info.circle")
+                    .imageScale(.medium)
+                    .foregroundStyle(.secondary)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(Text("dashboard.action.edit_habit"))
+        }
+        .contentShape(Rectangle())
     }
 }
 

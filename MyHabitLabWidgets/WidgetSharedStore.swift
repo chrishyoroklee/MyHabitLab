@@ -82,21 +82,21 @@ enum WidgetSharedStore {
         [
             WidgetHabitSnapshot(
                 id: UUID(),
-                name: "Drink Water",
+                name: String(localized: "widget.sample.drink_water"),
                 iconName: "drop",
                 colorName: "Blue",
                 isCompletedToday: true
             ),
             WidgetHabitSnapshot(
                 id: UUID(),
-                name: "Read",
+                name: String(localized: "widget.sample.read"),
                 iconName: "book",
                 colorName: "Indigo",
                 isCompletedToday: false
             ),
             WidgetHabitSnapshot(
                 id: UUID(),
-                name: "Walk",
+                name: String(localized: "widget.sample.walk"),
                 iconName: "figure.walk",
                 colorName: "Green",
                 isCompletedToday: false

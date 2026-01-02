@@ -37,7 +37,7 @@ enum ReminderScheduler {
         if let detail = habit.detail, detail.isEmpty == false {
             content.body = detail
         } else {
-            content.body = "Time to complete your habit."
+            content.body = String(localized: "notification.reminder_body")
         }
 
         var components = DateComponents()

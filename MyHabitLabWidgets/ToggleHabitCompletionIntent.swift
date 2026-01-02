@@ -1,10 +1,10 @@
 import AppIntents
 
 struct ToggleHabitCompletionIntent: AppIntent {
-    static var title: LocalizedStringResource = "Toggle Habit Completion"
-    static var description = IntentDescription("Toggle today's completion for a habit.")
+    static var title: LocalizedStringResource = "widget.intent.toggle.title"
+    static var description = IntentDescription("widget.intent.toggle.description")
 
-    @Parameter(title: "Habit ID")
+    @Parameter(title: "widget.intent.toggle.parameter")
     var habitId: String
 
     init() {

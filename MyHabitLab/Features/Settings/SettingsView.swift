@@ -1,6 +1,7 @@
 import SwiftUI
 import SwiftData
 import UniformTypeIdentifiers
+import Foundation
 
 struct SettingsView: View {
     @Environment(\.modelContext) private var modelContext
@@ -20,26 +21,28 @@ struct SettingsView: View {
     var body: some View {
         NavigationStack {
             List {
-                Section("Data") {
-                    Button("Export Data") {
+                Section("settings.section.data") {
+                    Button("settings.action.export") {
                         Task {
                             await exportData()
                         }
                     }
-                    Button("Import Data") {
+                    Button("settings.action.import") {
                         isImporting = true
                     }
                 }
-                Section("Habits") {
+                Section("settings.section.habits") {
                     if archivedHabits.isEmpty {
-                        Text("No archived habits.")
+                        Text("settings.no_archived")
                             .foregroundStyle(.secondary)
                     } else {
                         ForEach(archivedHabits) { habit in
                             HStack {
                                 Text(habit.name)
+                                    .lineLimit(2)
+                                    .layoutPriority(1)
                                 Spacer()
-                                Button("Restore") {
+                                Button("settings.action.restore") {
                                     restore(habit)
                                 }
                                 .buttonStyle(.bordered)
@@ -47,19 +50,19 @@ struct SettingsView: View {
                         }
                     }
                 }
-                Section("About") {
-                    LabeledContent("Version", value: versionDescription)
+                Section("settings.section.about") {
+                    LabeledContent("settings.about.version", value: versionDescription)
                 }
             }
-            .navigationTitle("Settings")
+            .navigationTitle("settings.title")
             .fileExporter(
                 isPresented: $isExporting,
                 document: exportDocument,
                 contentType: .json,
-                defaultFilename: "MyHabitLab-export"
+                defaultFilename: String(localized: "settings.export.filename")
             ) { result in
                 if case .failure(let error) = result {
-                    alertMessage = "Export failed: \(error.localizedDescription)"
+                    alertMessage = String(format: String(localized: "error.export_failed"), error.localizedDescription)
                     isShowingAlert = true
                 }
             }
@@ -73,12 +76,12 @@ struct SettingsView: View {
                         await importData(from: url)
                     }
                 case .failure(let error):
-                    alertMessage = "Import failed: \(error.localizedDescription)"
+                    alertMessage = String(format: String(localized: "error.import_failed"), error.localizedDescription)
                     isShowingAlert = true
                 }
             }
-            .alert("Export / Import", isPresented: $isShowingAlert) {
-                Button("OK", role: .cancel) {}
+            .alert("settings.alert.title", isPresented: $isShowingAlert) {
+                Button("action.ok", role: .cancel) {}
             } message: {
                 Text(alertMessage)
             }
@@ -91,7 +94,7 @@ struct SettingsView: View {
             exportDocument = JSONFileDocument(data: data)
             isExporting = true
         } catch {
-            alertMessage = "Export failed: \(error.localizedDescription)"
+            alertMessage = String(format: String(localized: "error.export_failed"), error.localizedDescription)
             isShowingAlert = true
         }
     }
@@ -106,10 +109,10 @@ struct SettingsView: View {
             )
             let habits = try modelContext.fetch(FetchDescriptor<Habit>())
             await ReminderScheduler.syncAll(habits: habits)
-            alertMessage = "Import complete."
+            alertMessage = String(localized: "settings.import.complete")
             isShowingAlert = true
         } catch {
-            alertMessage = "Import failed: \(error.localizedDescription)"
+            alertMessage = String(format: String(localized: "error.import_failed"), error.localizedDescription)
             isShowingAlert = true
         }
     }
@@ -126,7 +129,7 @@ struct SettingsView: View {
                 await ReminderScheduler.update(for: habit)
             }
         } catch {
-            alertMessage = "Failed to restore habit: \(error.localizedDescription)"
+            alertMessage = String(format: String(localized: "error.restore_failed"), error.localizedDescription)
             isShowingAlert = true
         }
     }

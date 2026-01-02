@@ -2,7 +2,7 @@ import AppIntents
 import Foundation
 
 struct HabitEntity: AppEntity, Identifiable, Hashable {
-    static var typeDisplayRepresentation: TypeDisplayRepresentation = "Habit"
+    static var typeDisplayRepresentation: TypeDisplayRepresentation = "shortcut.habit.type"
     static var defaultQuery = HabitEntityQuery()
 
     let id: UUID
@@ -11,10 +11,13 @@ struct HabitEntity: AppEntity, Identifiable, Hashable {
     let colorName: String
 
     var displayRepresentation: DisplayRepresentation {
+        let symbolName = iconName.isEmpty ? "checkmark.circle" : iconName
+        let colorKey = HabitPalette.displayNameKey(for: colorName)
+        let colorDisplay = NSLocalizedString(colorKey, comment: "")
         DisplayRepresentation(
             title: LocalizedStringResource(stringLiteral: name),
-            subtitle: LocalizedStringResource(stringLiteral: colorName),
-            image: .init(systemName: iconName)
+            subtitle: LocalizedStringResource(stringLiteral: colorDisplay),
+            image: .init(systemName: symbolName)
         )
     }
 

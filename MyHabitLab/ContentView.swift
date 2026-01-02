@@ -14,15 +14,15 @@ struct ContentView: View {
         TabView {
             DashboardView(dateProvider: dateProvider)
                 .tabItem {
-                    Label("Dashboard", systemImage: "square.grid.2x2")
+                    Label("tab.dashboard", systemImage: "square.grid.2x2")
                 }
-            StatsView()
+            StatsView(dateProvider: dateProvider)
                 .tabItem {
-                    Label("Stats", systemImage: "chart.bar")
+                    Label("tab.stats", systemImage: "chart.bar")
                 }
             SettingsView()
                 .tabItem {
-                    Label("Settings", systemImage: "gearshape")
+                    Label("tab.settings", systemImage: "gearshape")
                 }
         }
     }

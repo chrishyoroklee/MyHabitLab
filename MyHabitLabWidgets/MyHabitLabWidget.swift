@@ -38,8 +38,8 @@ struct MyHabitLabWidget: Widget {
         StaticConfiguration(kind: kind, provider: HabitProvider()) { entry in
             MyHabitLabWidgetView(entry: entry)
         }
-        .configurationDisplayName("MyHabitLab")
-        .description("Track today's habits at a glance.")
+        .configurationDisplayName("widget.display_name")
+        .description("widget.description")
         .supportedFamilies([.systemSmall, .systemMedium])
     }
 }
@@ -50,7 +50,7 @@ struct MyHabitLabWidgetView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Today")
+            Text("widget.today")
                 .font(.headline)
             ForEach(displayHabits) { habit in
                 WidgetHabitRow(habit: habit)

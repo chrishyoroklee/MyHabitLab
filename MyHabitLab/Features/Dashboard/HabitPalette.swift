@@ -24,6 +24,18 @@ enum HabitPalette {
     static func defaultName() -> String {
         options.first?.name ?? "Blue"
     }
+
+    static func displayNameKey(for name: String) -> String {
+        switch name {
+        case "Blue": return "color.blue"
+        case "Green": return "color.green"
+        case "Orange": return "color.orange"
+        case "Pink": return "color.pink"
+        case "Teal": return "color.teal"
+        case "Indigo": return "color.indigo"
+        default: return "color.blue"
+        }
+    }
 }
 
 enum HabitIconOptions {
