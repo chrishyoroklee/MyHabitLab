@@ -9,6 +9,7 @@ struct HabitCardView: View {
     let toggleAction: () -> Bool
 
     @State private var confettiCounter = 0
+    @State private var heatmapWidth: CGFloat = 0
 
     private var statusText: String {
         progressText ?? (isScheduledToday ? "Due today" : "Not scheduled")
@@ -90,14 +91,33 @@ struct HabitCardView: View {
             Divider()
                 .overlay(Color.white.opacity(0.1))
 
-            ContributionGraphView(
-                completedDayKeys: completedDayKeys,
-                color: AppColors.color(for: habit.colorName),
-                weeksToDisplay: 14,
-                blockSize: 8,
-                spacing: 2
+            let weeksToDisplay = 52
+            let spacing: CGFloat = 1
+            let availableWidth = heatmapWidth > 0 ? heatmapWidth : 280
+            let blockSize = max(1, floor((availableWidth - CGFloat(weeksToDisplay - 1) * spacing) / CGFloat(weeksToDisplay)))
+            let graphHeight = blockSize * 7 + spacing * 6
+
+            ZStack(alignment: .leading) {
+                Color.clear
+                ContributionGraphView(
+                    completedDayKeys: completedDayKeys,
+                    color: AppColors.color(for: habit.colorName),
+                    weeksToDisplay: weeksToDisplay,
+                    blockSize: blockSize,
+                    spacing: spacing
+                )
+                .frame(height: graphHeight, alignment: .leading)
+            }
+            .frame(maxWidth: .infinity, minHeight: graphHeight, alignment: .leading)
+            .background(
+                GeometryReader { proxy in
+                    Color.clear
+                        .onAppear { heatmapWidth = proxy.size.width }
+                        .onChange(of: proxy.size.width) { _, newValue in
+                            heatmapWidth = newValue
+                        }
+                }
             )
-            .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, 12)
             .padding(.vertical, 10)
             .background(Color.black.opacity(0.2))

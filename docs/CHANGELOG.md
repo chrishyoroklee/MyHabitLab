@@ -109,3 +109,7 @@ This update transforms MyHabitLab into a premium, hybrid habit tracker inspired 
 - **Widgets**: Added a daily summary widget and a per-habit configurable widget with interactive toggles and unit progress support.
 - **Widget sync**: Extended widget snapshots to include unit progress, schedule/policy data, and updated sync logic for unit-aware toggling.
 - **Theme parity**: Applied AppColors backgrounds and readable text styling across forms, lists, and calendar editor for consistent dark theme.
+
+## [2026-01-03 19:05] Calendar editor unit edits
+- **History edits**: Added a visible “Edit history” button in Habit Detail and clarified the dashboard context menu.
+- **Unit support**: Calendar editor now opens a value editor sheet for unit habits to set exact past-day values (goal/increment quick fills + clear).

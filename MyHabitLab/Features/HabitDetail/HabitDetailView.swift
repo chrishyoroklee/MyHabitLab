@@ -6,6 +6,7 @@ struct HabitDetailView: View {
     let dateProvider: DateProvider
 
     @State private var isShowingEditSheet = false
+    @State private var isShowingHistory = false
 
     private var completionValues: [Int: Int] {
         HabitCompletionService.completionValueByDayKey(for: habit)
@@ -122,6 +123,23 @@ struct HabitDetailView: View {
                     }
                     .padding(.horizontal)
 
+                    Button {
+                        isShowingHistory = true
+                    } label: {
+                        Label("dashboard.action.edit_history", systemImage: "calendar")
+                            .font(.subheadline)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 10)
+                            .background(AppColors.cardBackground)
+                            .clipShape(RoundedRectangle(cornerRadius: 10))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 10)
+                                    .stroke(AppColors.color(for: habit.colorName).opacity(0.3), lineWidth: 1)
+                            )
+                    }
+                    .buttonStyle(.plain)
+                    .padding(.horizontal)
+
                     VStack(alignment: .leading, spacing: 8) {
                         Text("History")
                             .font(.headline)
@@ -166,6 +184,9 @@ struct HabitDetailView: View {
             }
             .sheet(isPresented: $isShowingEditSheet) {
                 HabitFormView(habit: habit)
+            }
+            .sheet(isPresented: $isShowingHistory) {
+                HabitCalendarEditorView(habit: habit, dateProvider: dateProvider)
             }
         }
     }

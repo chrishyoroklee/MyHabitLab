@@ -79,7 +79,7 @@ struct DashboardView: View {
                                     Button {
                                         editingHabit = habit
                                     } label: {
-                                        Label("Edit", systemImage: "pencil")
+                                        Label("dashboard.action.edit_history", systemImage: "calendar")
                                     }
                                 }
                             }
