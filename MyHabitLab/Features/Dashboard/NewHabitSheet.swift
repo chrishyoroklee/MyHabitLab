@@ -2,174 +2,173 @@ import SwiftUI
 import SwiftData
 import UserNotifications
 
-struct NewHabitSheet: View {
+struct HabitFormView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
-
+    
+    var habitToEdit: Habit?
+    
     @State private var name: String = ""
-    @State private var iconName: String = HabitIconOptions.defaultName()
-    @State private var colorName: String = HabitPalette.defaultName()
+    @State private var iconName: String = "heart.fill"
+    @State private var colorName: String = AppColors.allColorNames.first!
+    @State private var targetPerWeek: Int = 7
     @State private var note: String = ""
     @State private var reminderEnabled: Bool = false
-    @State private var reminderTime: Date = {
-        var components = DateComponents()
-        components.hour = 9
-        components.minute = 0
-        return Calendar.current.date(from: components) ?? Date()
-    }()
-    @State private var authorizationStatus: UNAuthorizationStatus = .notDetermined
-    @State private var isShowingPermissionAlert = false
-    @State private var isShowingDeniedAlert = false
+    @State private var reminderTime: Date = Date()
+    
+    @State private var selectedIconCategory: IconCategory = .health
+    
+    // Init for editing
+    init(habit: Habit? = nil) {
+        self.habitToEdit = habit
+    }
 
     var body: some View {
         NavigationStack {
             Form {
-                Section("habit.section.basics") {
-                    TextField("habit.field.name", text: $name)
-                        .textInputAutocapitalization(.words)
-                        .accessibilityLabel(Text("habit.field.name"))
-                    Picker("habit.field.icon", selection: $iconName) {
-                        ForEach(HabitIconOptions.names, id: \.self) { icon in
-                            Label(iconTitle(icon), systemImage: icon)
-                                .tag(icon)
-                        }
-                    }
-                }
-
-                Section("habit.section.color") {
-                    Picker("habit.section.color", selection: $colorName) {
-                        ForEach(HabitPalette.options) { option in
-                            HStack {
+                Section {
+                    HStack {
+                        Spacer()
+                        VStack(spacing: 12) {
+                            // Preview Icon
+                            ZStack {
                                 Circle()
-                                    .fill(option.color)
-                                    .frame(width: 12, height: 12)
-                                Text(HabitPalette.displayNameKey(for: option.name))
+                                    .fill(AppColors.color(for: colorName).opacity(0.1))
+                                    .frame(width: 80, height: 80)
+                                
+                                Image(systemName: iconName)
+                                    .font(.system(size: 32))
+                                    .foregroundStyle(AppColors.color(for: colorName))
                             }
-                            .tag(option.name)
+                            
+                            TextField("Name your habit", text: $name)
+                                .font(.title2)
+                                .multilineTextAlignment(.center)
+                                .submitLabel(.done)
+                        }
+                        Spacer()
+                    }
+                    .listRowBackground(Color.clear)
+                }
+                
+                Section("Frequency") {
+                    Stepper("\(targetPerWeek) days / week", value: $targetPerWeek, in: 1...7)
+                }
+                
+                Section("Appearance") {
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 12) {
+                            ForEach(AppColors.allColorNames, id: \.self) { color in
+                                Circle()
+                                    .fill(AppColors.color(for: color))
+                                    .frame(width: 32, height: 32)
+                                    .overlay(
+                                        Circle()
+                                            .stroke(Color.primary, lineWidth: colorName == color ? 2 : 0)
+                                    )
+                                    .onTapGesture {
+                                        withAnimation {
+                                            colorName = color
+                                        }
+                                    }
+                            }
+                        }
+                        .padding(.vertical, 8)
+                    }
+                    
+                    Picker("Category", selection: $selectedIconCategory) {
+                        ForEach(IconCategory.allCases) { category in
+                            Text(category.rawValue).tag(category)
                         }
                     }
-                }
-
-                Section("habit.section.reminder") {
-                    Toggle("habit.field.reminder_toggle", isOn: $reminderEnabled)
-                        .accessibilityLabel(Text("habit.field.reminder_toggle"))
-                    if reminderEnabled {
-                        DatePicker("habit.field.reminder_time", selection: $reminderTime, displayedComponents: .hourAndMinute)
-                            .accessibilityLabel(Text("habit.field.reminder_time"))
+                    .pickerStyle(.menu)
+                    
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 16) {
+                            ForEach(selectedIconCategory.icons, id: \.self) { icon in
+                                Image(systemName: icon)
+                                    .font(.title3)
+                                    .foregroundStyle(iconName == icon ? AppColors.color(for: colorName) : Color.secondary)
+                                    .padding(8)
+                                    .background(iconName == icon ? AppColors.color(for: colorName).opacity(0.1) : Color.clear)
+                                    .clipShape(Circle())
+                                    .onTapGesture {
+                                        iconName = icon
+                                    }
+                            }
+                        }
+                        .padding(.vertical, 8)
                     }
                 }
-
-                Section("habit.section.note") {
-                    TextField("habit.field.note_placeholder", text: $note, axis: .vertical)
-                        .lineLimit(3, reservesSpace: true)
-                        .accessibilityLabel(Text("habit.field.note_placeholder"))
+                
+                Section("Reminders") {
+                    Toggle("Enable Reminder", isOn: $reminderEnabled)
+                    if reminderEnabled {
+                        DatePicker("Time", selection: $reminderTime, displayedComponents: .hourAndMinute)
+                    }
+                }
+                
+                Section("Notes") {
+                    TextField("Motivation...", text: $note, axis: .vertical)
+                        .lineLimit(3...6)
                 }
             }
-            .navigationTitle("habit.new.title")
+            .navigationTitle(habitToEdit == nil ? "New Habit" : "Edit Habit")
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("action.cancel") {
-                        dismiss()
-                    }
+                    Button("Cancel") { dismiss() }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("action.save") {
-                        saveHabit()
-                    }
-                    .disabled(isSaveDisabled)
+                    Button("Save") { save() }
+                        .disabled(name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                        .fontWeight(.bold)
                 }
             }
-            .task {
-                authorizationStatus = await ReminderScheduler.authorizationStatus()
-            }
-            .onChange(of: reminderEnabled) { _, newValue in
-                guard newValue else { return }
-                if authorizationStatus == .notDetermined {
-                    isShowingPermissionAlert = true
-                } else if authorizationStatus == .denied {
-                    isShowingDeniedAlert = true
-                    reminderEnabled = false
+            .onAppear {
+                if let habit = habitToEdit {
+                    name = habit.name
+                    iconName = habit.iconName
+                    colorName = habit.colorName
+                    targetPerWeek = habit.targetPerWeek
+                    note = habit.detail ?? ""
+                    reminderEnabled = habit.reminderEnabled
+                    let components = DateComponents(hour: habit.reminderHour, minute: habit.reminderMinute)
+                    reminderTime = Calendar.current.date(from: components) ?? Date()
                 }
-            }
-            .alert("permission.notifications.title", isPresented: $isShowingPermissionAlert) {
-                Button("permission.notifications.not_now", role: .cancel) {
-                    reminderEnabled = false
-                }
-                Button("permission.notifications.allow") {
-                    Task {
-                        let granted = await ReminderScheduler.requestAuthorization()
-                        authorizationStatus = await ReminderScheduler.authorizationStatus()
-                        if granted == false {
-                            reminderEnabled = false
-                            isShowingDeniedAlert = true
-                        }
-                    }
-                }
-            } message: {
-                Text("permission.notifications.message")
-            }
-            .alert("permission.notifications.denied_title", isPresented: $isShowingDeniedAlert) {
-                Button("action.ok", role: .cancel) {}
-            } message: {
-                Text("permission.notifications.denied_message")
             }
         }
     }
-
-    private var isSaveDisabled: Bool {
-        name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-    }
-
-    private func saveHabit() {
-        let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmedName.isEmpty else { return }
-        let trimmedNote = note.trimmingCharacters(in: .whitespacesAndNewlines)
-        let timeComponents = Calendar.current.dateComponents([.hour, .minute], from: reminderTime)
-        let reminderHour = timeComponents.hour ?? 9
-        let reminderMinute = timeComponents.minute ?? 0
-        let habit = Habit(
-            name: trimmedName,
-            iconName: iconName,
-            colorName: colorName,
-            detail: trimmedNote.isEmpty ? nil : trimmedNote,
-            reminderEnabled: reminderEnabled,
-            reminderHour: reminderHour,
-            reminderMinute: reminderMinute
-        )
-        modelContext.insert(habit)
-        do {
-            try modelContext.save()
-            WidgetStoreSync.updateSnapshot(
-                context: modelContext,
-                dayKey: DayKey.from(Date())
+    
+    private func save() {
+        let components = Calendar.current.dateComponents([.hour, .minute], from: reminderTime)
+        
+        if let habit = habitToEdit {
+            // Edit
+            habit.name = name
+            habit.iconName = iconName
+            habit.colorName = colorName
+            habit.targetPerWeek = targetPerWeek
+            habit.detail = note.isEmpty ? nil : note
+            habit.reminderEnabled = reminderEnabled
+            habit.reminderHour = components.hour ?? 9
+            habit.reminderMinute = components.minute ?? 0
+        } else {
+            // Create
+            let habit = Habit(
+                name: name,
+                iconName: iconName,
+                colorName: colorName,
+                detail: note.isEmpty ? nil : note,
+                targetPerWeek: targetPerWeek,
+                reminderEnabled: reminderEnabled,
+                reminderHour: components.hour ?? 9,
+                reminderMinute: components.minute ?? 0
             )
-            Task {
-                await ReminderScheduler.update(for: habit)
-            }
-            dismiss()
-        } catch {
-            assertionFailure("Failed to save habit: \(error)")
+            modelContext.insert(habit)
         }
+        
+        try? modelContext.save()
+        dismiss()
     }
-
-    private func iconTitle(_ icon: String) -> LocalizedStringKey {
-        switch icon {
-        case "checkmark.circle": return "icon.check"
-        case "drop": return "icon.water"
-        case "book": return "icon.reading"
-        case "flame": return "icon.workout"
-        case "leaf": return "icon.wellness"
-        case "heart": return "icon.health"
-        case "figure.walk": return "icon.walk"
-        case "bolt": return "icon.energy"
-        case "music.note": return "icon.music"
-        default: return "icon.habit"
-        }
-    }
-}
-
-#Preview("New Habit Sheet") {
-    let container = ModelContainerFactory.makePreviewContainer()
-    return NewHabitSheet()
-        .modelContainer(container)
 }

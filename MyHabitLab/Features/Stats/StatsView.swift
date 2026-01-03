@@ -33,7 +33,7 @@ struct StatsView: View {
                     }
                 }
             }
-            .navigationTitle("stats.title")
+            .background(AppColors.primaryBackground) // Force dark background
         }
     }
 
@@ -72,13 +72,20 @@ private struct WeeklySummaryCard: View {
         VStack(alignment: .leading, spacing: 8) {
             Text("stats.summary.week")
                 .font(.headline)
+                .foregroundStyle(.white.opacity(0.7))
             Text(String(format: String(localized: "stats.summary.completions"), count))
                 .font(.title3)
-                .fontWeight(.semibold)
+                .fontWeight(.bold)
+                .foregroundStyle(.white)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding()
-        .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 12))
+        .background(AppColors.cardBackground)
+        .cornerRadius(12)
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(Color.white.opacity(0.1), lineWidth: 1)
+        )
     }
 }
 
@@ -96,19 +103,31 @@ private struct HabitStatsCard: View {
                 )
                 Text(habit.name)
                     .font(.headline)
+                    .fontWeight(.bold)
+                    .foregroundStyle(.white)
                     .lineLimit(2)
                     .layoutPriority(1)
             }
 
             LazyVGrid(columns: statColumns, alignment: .leading, spacing: 8) {
-                StatChip(label: "stats.card.current", value: "\(stats.currentStreak)")
-                StatChip(label: "stats.card.longest", value: "\(stats.longestStreak)")
-                StatChip(label: "stats.card.thirty_days", value: percentString(stats.completionRateLast30Days))
+                StatChip(label: "stats.card.current", value: "\(stats.currentStreak)", colorName: habit.colorName)
+                StatChip(label: "stats.card.longest", value: "\(stats.longestStreak)", colorName: habit.colorName)
+                StatChip(label: "stats.card.thirty_days", value: percentString(stats.completionRateLast30Days), colorName: habit.colorName)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding()
-        .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 12))
+        .background(
+            ZStack {
+                AppColors.cardBackground
+                AppColors.color(for: habit.colorName).opacity(0.05) // Subtle tint
+            }
+        )
+        .cornerRadius(12)
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(AppColors.color(for: habit.colorName).opacity(0.2), lineWidth: 1)
+        )
     }
 
     private func percentString(_ value: Double) -> String {
@@ -124,17 +143,24 @@ private struct HabitStatsCard: View {
 private struct StatChip: View {
     let label: String
     let value: String
+    let colorName: String
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(LocalizedStringKey(label))
                 .font(.caption)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(.white.opacity(0.6))
             Text(value)
                 .font(.subheadline)
-                .fontWeight(.semibold)
+                .fontWeight(.bold)
+                .foregroundStyle(.white)
         }
         .padding(8)
-        .background(Color(.tertiarySystemFill), in: RoundedRectangle(cornerRadius: 8))
+        .background(AppColors.cardBackground.opacity(0.5)) // Darken slightly
+        .cornerRadius(8)
+        .overlay(
+            RoundedRectangle(cornerRadius: 8)
+                 .stroke(AppColors.color(for: colorName).opacity(0.3), lineWidth: 1)
+        )
     }
 }
