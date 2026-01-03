@@ -14,7 +14,7 @@ struct HabitEntity: AppEntity, Identifiable, Hashable {
         let symbolName = iconName.isEmpty ? "checkmark.circle" : iconName
         let colorKey = HabitPalette.displayNameKey(for: colorName)
         let colorDisplay = NSLocalizedString(colorKey, comment: "")
-        DisplayRepresentation(
+        return DisplayRepresentation(
             title: LocalizedStringResource(stringLiteral: name),
             subtitle: LocalizedStringResource(stringLiteral: colorDisplay),
             image: .init(systemName: symbolName)
@@ -33,23 +33,23 @@ struct HabitEntity: AppEntity, Identifiable, Hashable {
 
 struct HabitEntityQuery: EntityQuery {
     func entities(for identifiers: [HabitEntity.ID]) async throws -> [HabitEntity] {
-        let habits = try await MainActor.run {
-            try HabitLookup.fetchHabits(ids: identifiers)
+        return try await MainActor.run {
+            let habits = try HabitLookup.fetchHabits(ids: identifiers)
+            return habits.map(HabitEntity.from)
         }
-        return habits.map(HabitEntity.from)
     }
 
     func suggestedEntities() async throws -> [HabitEntity] {
-        let habits = try await MainActor.run {
-            try HabitLookup.fetchSuggestedHabits(limit: 6)
+        return try await MainActor.run {
+            let habits = try HabitLookup.fetchSuggestedHabits(limit: 6)
+            return habits.map(HabitEntity.from)
         }
-        return habits.map(HabitEntity.from)
     }
 
     func entities(matching query: String) async throws -> [HabitEntity] {
-        let habits = try await MainActor.run {
-            try HabitLookup.searchHabits(matching: query, limit: 10)
+        return try await MainActor.run {
+            let habits = try HabitLookup.searchHabits(matching: query, limit: 10)
+            return habits.map(HabitEntity.from)
         }
-        return habits.map(HabitEntity.from)
     }
 }

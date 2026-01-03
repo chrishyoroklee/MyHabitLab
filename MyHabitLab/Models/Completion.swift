@@ -7,7 +7,6 @@ final class Completion {
     var dayKey: Int
     var value: Int
     var createdAt: Date
-    @Relationship(inverse: \Habit.completions)
     var habit: Habit?
 
     init(

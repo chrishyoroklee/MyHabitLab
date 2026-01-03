@@ -13,7 +13,7 @@ final class Habit: Identifiable {
     var reminderMinute: Int
     var createdAt: Date
     var isArchived: Bool
-    @Relationship(deleteRule: .cascade, inverse: \Completion.habit)
+    @Relationship(deleteRule: .cascade)
     var completions: [Completion]
 
     init(

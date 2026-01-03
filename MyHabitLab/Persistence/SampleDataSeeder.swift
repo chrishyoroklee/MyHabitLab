@@ -1,6 +1,7 @@
 import SwiftData
 import Foundation
 
+@MainActor
 enum SampleDataSeeder {
     static func seedIfNeeded(context: ModelContext) {
         var descriptor = FetchDescriptor<Habit>()

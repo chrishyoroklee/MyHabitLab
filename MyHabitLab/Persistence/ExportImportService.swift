@@ -29,23 +29,20 @@ struct ExportCompletion: Codable, Hashable {
 }
 
 enum ExportImportService {
+    @MainActor
     static func exportData(context: ModelContext) async throws -> Data {
-        let payload = try await MainActor.run {
-            try buildPayload(context: context)
-        }
+        let payload = try buildPayload(context: context)
         return try await Task.detached {
             try encode(payload)
         }.value
     }
 
+    @MainActor
     static func importData(_ data: Data, context: ModelContext) async throws {
         let payload = try await Task.detached {
             try decode(data)
         }.value
-
-        try await MainActor.run {
-            try apply(payload, context: context)
-        }
+        try apply(payload, context: context)
     }
 
     static func readData(from url: URL) async throws -> Data {
