@@ -70,7 +70,7 @@ struct HabitFormView: View {
                          ? "Mark a day complete with a single tap."
                          : "Track progress toward a numeric goal.")
                     .font(.footnote)
-                    .foregroundStyle(.white.opacity(0.6))
+                    .foregroundStyle(AppColors.textSecondary)
                 }
                 .listRowBackground(AppColors.cardBackground)
 
@@ -100,7 +100,7 @@ struct HabitFormView: View {
 
                         Text("Base unit: \(unitBaseName) • Stored as \(unitBaseScale)x base units")
                             .font(.footnote)
-                            .foregroundStyle(.white.opacity(0.6))
+                            .foregroundStyle(AppColors.textSecondary)
                     }
                     .listRowBackground(AppColors.cardBackground)
 
@@ -118,7 +118,7 @@ struct HabitFormView: View {
                     WeekdayPicker(selection: $scheduleSelection)
                     Text("Select the days this habit is due.")
                         .font(.footnote)
-                        .foregroundStyle(.white.opacity(0.6))
+                        .foregroundStyle(AppColors.textSecondary)
                 }
                 .listRowBackground(AppColors.cardBackground)
 
@@ -133,14 +133,14 @@ struct HabitFormView: View {
                          ? "Off-day completions count toward streaks and rates."
                          : "Off-day completions count only toward totals.")
                     .font(.footnote)
-                    .foregroundStyle(.white.opacity(0.6))
+                    .foregroundStyle(AppColors.textSecondary)
                 }
                 .listRowBackground(AppColors.cardBackground)
 
                 Section("Reminders") {
                     if reminderDrafts.isEmpty {
                         Text("No reminders yet")
-                            .foregroundStyle(.white.opacity(0.6))
+                            .foregroundStyle(AppColors.textSecondary)
                     } else {
                         ForEach($reminderDrafts) { $draft in
                             ReminderEditor(
@@ -167,7 +167,7 @@ struct HabitFormView: View {
                                     .frame(width: 32, height: 32)
                                     .overlay(
                                         Circle()
-                                            .stroke(Color.white.opacity(0.8), lineWidth: colorName == color ? 2 : 0)
+                                            .stroke(AppColors.textPrimary.opacity(0.4), lineWidth: colorName == color ? 2 : 0)
                                     )
                                     .onTapGesture {
                                         withAnimation {
@@ -191,7 +191,7 @@ struct HabitFormView: View {
                             ForEach(selectedIconCategory.icons, id: \.self) { icon in
                                 Image(systemName: icon)
                                     .font(.title3)
-                                    .foregroundStyle(iconName == icon ? AppColors.color(for: colorName) : Color.white.opacity(0.6))
+                                    .foregroundStyle(iconName == icon ? AppColors.color(for: colorName) : AppColors.textSecondary)
                                     .padding(8)
                                     .background(iconName == icon ? AppColors.color(for: colorName).opacity(0.1) : Color.clear)
                                     .clipShape(Circle())
@@ -212,8 +212,8 @@ struct HabitFormView: View {
                 .listRowBackground(AppColors.cardBackground)
             }
             .scrollContentBackground(.hidden)
-            .foregroundStyle(.white)
-            .background(AppColors.primaryBackground)
+            .foregroundStyle(AppColors.textPrimary)
+            .background(AppColors.primaryBackgroundGradient)
             .navigationTitle(habitToEdit == nil ? "New Habit" : "Edit Habit")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -602,7 +602,7 @@ private struct UnitPresetPicker: View {
                             .font(.caption)
                             .padding(.horizontal, 10)
                             .padding(.vertical, 6)
-                            .background(selectedId == preset.id ? AppColors.cardBackground : Color.white.opacity(0.2))
+                            .background(selectedId == preset.id ? AppColors.cardBackground : AppColors.primaryBackground.opacity(0.08))
                             .clipShape(Capsule())
                     }
                     .buttonStyle(.plain)
@@ -630,7 +630,7 @@ private struct WeekdayPicker: View {
                         .font(.subheadline)
                         .fontWeight(.semibold)
                         .frame(width: 32, height: 32)
-                        .background(selection.contains(daySet) ? AppColors.cardBackground : Color.white.opacity(0.2))
+                        .background(selection.contains(daySet) ? AppColors.cardBackground : AppColors.primaryBackground.opacity(0.08))
                         .clipShape(Circle())
                 }
                 .buttonStyle(.plain)
@@ -770,7 +770,7 @@ private struct ReminderEditor: View {
                 DatePicker("End", selection: $reminder.endTime, displayedComponents: .hourAndMinute)
                 Text("Intervals repeat inside this daily window.")
                     .font(.footnote)
-                    .foregroundStyle(.white.opacity(0.6))
+                    .foregroundStyle(AppColors.textSecondary)
             }
 
             Toggle("Custom days", isOn: $reminder.usesCustomDays)
@@ -779,7 +779,7 @@ private struct ReminderEditor: View {
             } else {
                 Text("Uses habit schedule")
                     .font(.footnote)
-                    .foregroundStyle(.white.opacity(0.6))
+                    .foregroundStyle(AppColors.textSecondary)
             }
         }
         .padding(.vertical, 8)

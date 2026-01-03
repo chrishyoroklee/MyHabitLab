@@ -29,7 +29,7 @@ struct DashboardView: View {
                             Text(today.displayTitle)
                                 .font(.title3)
                                 .fontWeight(.medium)
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(.primary)
                         }
                         Spacer()
                     }
@@ -89,7 +89,7 @@ struct DashboardView: View {
                     }
                 }
             }
-            .background(AppColors.primaryBackground)
+            .background(AppColors.primaryBackgroundGradient)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     Text("MyHabitLab")

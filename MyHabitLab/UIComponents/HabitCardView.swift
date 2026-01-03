@@ -33,7 +33,7 @@ struct HabitCardView: View {
                         Text(habit.name)
                             .font(.headline)
                             .fontWeight(.bold)
-                            .foregroundColor(.white)
+                            .foregroundColor(AppColors.textPrimary)
                             .lineLimit(1)
 
                         if !isScheduledToday {
@@ -44,13 +44,13 @@ struct HabitCardView: View {
                                 .padding(.vertical, 2)
                                 .background(AppColors.cardBackground)
                                 .clipShape(Capsule())
-                                .foregroundStyle(.white.opacity(0.8))
+                                .foregroundStyle(AppColors.textSecondary)
                         }
                     }
 
                     Text(statusText)
                         .font(.caption)
-                        .foregroundColor(.white.opacity(0.6))
+                        .foregroundColor(AppColors.textSecondary)
                 }
 
                 Spacer()
@@ -89,7 +89,7 @@ struct HabitCardView: View {
             .padding(16)
 
             Divider()
-                .overlay(Color.white.opacity(0.1))
+                .overlay(AppColors.textSecondary.opacity(0.15))
 
             let weeksToDisplay = 52
             let spacing: CGFloat = 1
@@ -120,7 +120,7 @@ struct HabitCardView: View {
             )
             .padding(.horizontal, 12)
             .padding(.vertical, 10)
-            .background(Color.black.opacity(0.2))
+            .background(AppColors.primaryBackground.opacity(0.08))
         }
         .background(
             ZStack {
@@ -129,7 +129,7 @@ struct HabitCardView: View {
             }
         )
         .cornerRadius(16)
-        .shadow(color: Color.black.opacity(0.2), radius: 10, x: 0, y: 5)
+        .shadow(color: AppColors.primaryBackground.opacity(0.15), radius: 10, x: 0, y: 5)
         .overlay(
             RoundedRectangle(cornerRadius: 16)
                 .stroke(AppColors.color(for: habit.colorName).opacity(0.15), lineWidth: 1)

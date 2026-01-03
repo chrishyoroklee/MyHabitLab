@@ -33,7 +33,7 @@ struct SettingsView: View {
                         .disabled(isSyncMigrating)
                     Text("Keeps habits and history in sync across devices. Requires a restart after changes.")
                         .font(.footnote)
-                        .foregroundStyle(.white.opacity(0.6))
+                        .foregroundStyle(AppColors.textSecondary)
                     if isSyncMigrating {
                         ProgressView("Migrating data...")
                     }
@@ -53,7 +53,7 @@ struct SettingsView: View {
                 Section("settings.section.habits") {
                     if archivedHabits.isEmpty {
                         Text("settings.no_archived")
-                            .foregroundStyle(.white.opacity(0.6))
+                            .foregroundStyle(AppColors.textSecondary)
                     } else {
                         ForEach(archivedHabits) { habit in
                             HStack {
@@ -75,9 +75,9 @@ struct SettingsView: View {
                 }
                 .listRowBackground(AppColors.cardBackground)
             }
-            .foregroundStyle(.white)
-            .scrollContentBackground(.hidden) // Remove system default light/gray background
-            .background(AppColors.primaryBackground) // Force dark background
+            .foregroundStyle(AppColors.textPrimary)
+            .scrollContentBackground(.hidden)
+            .background(AppColors.primaryBackgroundGradient)
 
             .fileExporter(
                 isPresented: $isExporting,

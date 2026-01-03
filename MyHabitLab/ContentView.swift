@@ -32,7 +32,7 @@ struct ContentView: View {
             CustomTabBar(selectedTab: $selectedTab)
                 .padding(.bottom, 20)
         }
-        .background(AppColors.primaryBackground)
+        .background(AppColors.primaryBackgroundGradient)
         .ignoresSafeArea(.keyboard) // Prevent tab bar from moving up with keyboard
     }
 }

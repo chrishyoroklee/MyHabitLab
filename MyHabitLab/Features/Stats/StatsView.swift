@@ -21,7 +21,7 @@ struct StatsView: View {
                         systemImage: "chart.bar",
                         description: Text("stats.empty.message")
                     )
-                    .foregroundStyle(.white)
+                    .foregroundStyle(AppColors.textOnPrimary)
                 } else {
                     ScrollView {
                         VStack(alignment: .leading, spacing: 16) {
@@ -34,7 +34,7 @@ struct StatsView: View {
                     }
                 }
             }
-            .background(AppColors.primaryBackground) // Force dark background
+            .background(AppColors.primaryBackgroundGradient)
         }
     }
 
@@ -80,11 +80,11 @@ private struct WeeklySummaryCard: View {
         VStack(alignment: .leading, spacing: 8) {
             Text("stats.summary.week")
                 .font(.headline)
-                .foregroundStyle(.white.opacity(0.7))
+                .foregroundStyle(AppColors.textSecondary)
             Text(String(format: String(localized: "stats.summary.completions"), count))
                 .font(.title3)
                 .fontWeight(.bold)
-                .foregroundStyle(.white)
+                .foregroundStyle(AppColors.textPrimary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding()
@@ -92,7 +92,7 @@ private struct WeeklySummaryCard: View {
         .cornerRadius(12)
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(Color.white.opacity(0.1), lineWidth: 1)
+                .stroke(AppColors.textSecondary.opacity(0.2), lineWidth: 1)
         )
     }
 }
@@ -112,7 +112,7 @@ private struct HabitStatsCard: View {
                 Text(habit.name)
                     .font(.headline)
                     .fontWeight(.bold)
-                    .foregroundStyle(.white)
+                    .foregroundStyle(AppColors.textPrimary)
                     .lineLimit(2)
                     .layoutPriority(1)
             }
@@ -157,14 +157,14 @@ private struct StatChip: View {
         VStack(alignment: .leading, spacing: 4) {
             Text(LocalizedStringKey(label))
                 .font(.caption)
-                .foregroundStyle(.white.opacity(0.6))
+                .foregroundStyle(AppColors.textSecondary)
             Text(value)
                 .font(.subheadline)
                 .fontWeight(.bold)
-                .foregroundStyle(.white)
+                .foregroundStyle(AppColors.textPrimary)
         }
         .padding(8)
-        .background(AppColors.cardBackground.opacity(0.5)) // Darken slightly
+        .background(AppColors.cardBackground)
         .cornerRadius(8)
         .overlay(
             RoundedRectangle(cornerRadius: 8)

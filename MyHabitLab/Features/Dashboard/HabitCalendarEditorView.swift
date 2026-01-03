@@ -15,7 +15,7 @@ struct HabitCalendarEditorView: View {
                 VStack(alignment: .leading, spacing: 16) {
                     Text("calendar.last_90_days")
                         .font(.headline)
-                        .foregroundStyle(.white)
+                        .foregroundStyle(AppColors.textOnPrimary)
 
                     LazyVGrid(columns: gridColumns, spacing: 8) {
                         ForEach(dayCells) { cell in
@@ -36,7 +36,7 @@ struct HabitCalendarEditorView: View {
                 }
                 .padding()
             }
-            .background(AppColors.primaryBackground)
+            .background(AppColors.primaryBackgroundGradient)
             .navigationTitle(habit.name)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
@@ -192,7 +192,7 @@ private struct DayCellView: View {
             Text(dayNumber)
                 .font(.caption2)
                 .minimumScaleFactor(0.6)
-                .foregroundStyle(isCompleted ? .white : .white.opacity(0.7))
+                .foregroundStyle(isCompleted ? AppColors.textOnPrimary : AppColors.textPrimary)
         }
         .frame(height: 32)
     }
@@ -263,7 +263,7 @@ private struct UnitDayEditorSheet: View {
                         .font(.headline)
                     Text(habit.name)
                         .font(.subheadline)
-                        .foregroundStyle(.white.opacity(0.7))
+                        .foregroundStyle(AppColors.textSecondary)
                 }
                 .listRowBackground(AppColors.cardBackground)
 
@@ -293,9 +293,9 @@ private struct UnitDayEditorSheet: View {
                     .listRowBackground(AppColors.cardBackground)
                 }
             }
-            .foregroundStyle(.white)
+            .foregroundStyle(AppColors.textPrimary)
             .scrollContentBackground(.hidden)
-            .background(AppColors.primaryBackground)
+            .background(AppColors.primaryBackgroundGradient)
             .navigationTitle("Edit Day")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

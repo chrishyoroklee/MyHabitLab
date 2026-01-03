@@ -16,11 +16,20 @@ enum AppColors {
     
     // Backgrounds
     // Backgrounds
-    // Dark / Trendy Theme ("HabitKit" style)
-    static let primaryBackground = Color(hex: "050505") // Almost pure black
-    static let cardBackground = Color(hex: "151515") // Subtle dark grey for interaction areas
-    static let textPrimary = Color.white
-    static let textSecondary = Color.gray
+    // Navy + white theme
+    static let primaryBackground = Color(hex: "2B4D7A") // Lighter navy
+    static let cardBackground = Color(hex: "F8FAFC") // Soft white
+    static let textPrimary = Color(hex: "0B1F3B") // Navy for light surfaces
+    static let textSecondary = Color(hex: "475569") // Slate
+    static let textOnPrimary = Color.white
+    static let primaryBackgroundGradient = LinearGradient(
+        colors: [
+            primaryBackground.opacity(0.9),
+            primaryBackground.opacity(0.75)
+        ],
+        startPoint: .top,
+        endPoint: .bottom
+    )
     
     // MARK: - Helper
     

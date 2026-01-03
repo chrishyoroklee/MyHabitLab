@@ -86,12 +86,12 @@ struct HabitDetailView: View {
                         Text(habit.name)
                             .font(.title)
                             .fontWeight(.black)
-                            .foregroundStyle(.white)
+                            .foregroundStyle(AppColors.textOnPrimary)
 
                         if let progress = todayProgressText {
                             Text(progress)
                                 .font(.headline)
-                                .foregroundStyle(.white.opacity(0.85))
+                                .foregroundStyle(AppColors.textOnPrimary.opacity(0.85))
                         }
 
                         if !isScheduledToday {
@@ -102,13 +102,13 @@ struct HabitDetailView: View {
                                 .padding(.vertical, 4)
                                 .background(AppColors.cardBackground)
                                 .clipShape(Capsule())
-                                .foregroundStyle(.white.opacity(0.8))
+                                .foregroundStyle(AppColors.textSecondary)
                         }
 
                         if let detail = habit.detail {
                             Text(detail)
                                 .font(.body)
-                                .foregroundStyle(.white.opacity(0.7))
+                                .foregroundStyle(AppColors.textOnPrimary.opacity(0.7))
                                 .multilineTextAlignment(.center)
                                 .padding(.horizontal)
                         }
@@ -128,6 +128,7 @@ struct HabitDetailView: View {
                     } label: {
                         Label("dashboard.action.edit_history", systemImage: "calendar")
                             .font(.subheadline)
+                            .foregroundStyle(AppColors.textPrimary)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 10)
                             .background(AppColors.cardBackground)
@@ -143,7 +144,7 @@ struct HabitDetailView: View {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("History")
                             .font(.headline)
-                            .foregroundStyle(.white)
+                            .foregroundStyle(AppColors.textPrimary)
                             .padding(.leading)
 
                         ScrollView(.horizontal, showsIndicators: false) {
@@ -170,7 +171,7 @@ struct HabitDetailView: View {
             }
             .background(
                 ZStack {
-                    AppColors.primaryBackground
+                    AppColors.primaryBackgroundGradient
                     AppColors.color(for: habit.colorName).opacity(0.05).ignoresSafeArea()
                 }
             )
@@ -215,12 +216,12 @@ struct StatCard: View {
             Text(value)
                 .font(.title2)
                 .fontWeight(.bold)
-                .foregroundStyle(.white)
+                .foregroundStyle(AppColors.textPrimary)
                 .frame(maxWidth: .infinity, alignment: .leading)
 
             Text(title)
                 .font(.caption)
-                .foregroundColor(.white.opacity(0.6))
+                .foregroundColor(AppColors.textSecondary)
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
         .padding()
@@ -230,6 +231,6 @@ struct StatCard: View {
             RoundedRectangle(cornerRadius: 12)
                 .stroke(color.opacity(0.3), lineWidth: 1)
         )
-        .shadow(color: Color.black.opacity(0.1), radius: 4, x: 0, y: 2)
+        .shadow(color: AppColors.primaryBackground.opacity(0.1), radius: 4, x: 0, y: 2)
     }
 }

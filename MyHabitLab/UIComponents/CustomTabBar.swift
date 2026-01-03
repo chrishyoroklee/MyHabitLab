@@ -34,7 +34,7 @@ struct CustomTabBar: View {
                         // Optional Label? User said "trendy", maybe just icons or small labels.
                         // Let's stick to icons for ultra-minimalism or small text.
                     }
-                    .foregroundColor(selectedTab == tab ? .white : .gray.opacity(0.5))
+                    .foregroundColor(selectedTab == tab ? AppColors.textPrimary : AppColors.textSecondary)
                     .frame(height: 50)
                 }
                 Spacer()
@@ -44,11 +44,11 @@ struct CustomTabBar: View {
         .padding(.horizontal, 20)
         .background {
             Capsule()
-                .fill(Color(hex: "1C1C1E").opacity(0.9)) // Glassy lighter grey
-                .shadow(color: .black.opacity(0.3), radius: 10, x: 0, y: 5)
+                .fill(AppColors.cardBackground)
+                .shadow(color: AppColors.primaryBackground.opacity(0.2), radius: 10, x: 0, y: 5)
                 .overlay(
                     Capsule()
-                        .stroke(Color.white.opacity(0.1), lineWidth: 0.5)
+                        .stroke(AppColors.primaryBackground.opacity(0.1), lineWidth: 0.5)
                 )
         }
         .padding(.horizontal, 40)
