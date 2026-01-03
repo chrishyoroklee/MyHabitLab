@@ -1,81 +1,136 @@
 import SwiftUI
 import SwiftData
-import UserNotifications
 
 struct HabitDetailView: View {
-    @Environment(\.dismiss) private var dismiss
-    @Environment(\.modelContext) private var modelContext
     @Bindable var habit: Habit
     let dateProvider: DateProvider
-    
+
     @State private var isShowingEditSheet = false
-    
-    // Stats
-    private var currentStreak: Int {
-        // Simple logic for now
-        return calculateStreak()
+
+    private var completionValues: [Int: Int] {
+        HabitCompletionService.completionValueByDayKey(for: habit)
     }
-    
-    private var completionRate: String {
-        let total = habit.completions.count
-        guard total > 0 else { return "0%" }
-        // Simple rate: Completions / Days since creation (approx)
-        let days = Calendar.current.dateComponents([.day], from: habit.createdAt, to: Date()).day ?? 1
-        let rate = Double(total) / Double(max(days, 1)) * 100
-        return String(format: "%.0f%%", rate)
+
+    private var completedDayKeys: Set<Int> {
+        HabitCompletionService.completedDayKeys(for: habit)
+    }
+
+    private var streakStats: StreakStats {
+        StreakCalculator.calculate(
+            completionValuesByDayKey: completionValues,
+            trackingMode: habit.trackingMode,
+            goalBaseValue: habit.unitGoalBaseValue,
+            scheduleMask: habit.scheduleMask,
+            extraCompletionPolicy: habit.extraCompletionPolicy,
+            today: dateProvider.now(),
+            calendar: dateProvider.calendar,
+            timeZone: dateProvider.calendar.timeZone
+        )
+    }
+
+    private var totalCompletions: Int {
+        completionValues.reduce(0) { partial, entry in
+            HabitCompletionService.isComplete(habit: habit, completionValue: entry.value) ? partial + 1 : partial
+        }
+    }
+
+    private var completionRateText: String {
+        percentString(streakStats.completionRateLast30Days)
+    }
+
+    private var isScheduledToday: Bool {
+        HabitSchedule.isScheduled(
+            on: dateProvider.today().start,
+            scheduleMask: habit.scheduleMask,
+            calendar: dateProvider.calendar
+        )
+    }
+
+    private var todayProgressText: String? {
+        HabitCompletionService.progressText(
+            habit: habit,
+            completionValue: completionValues[dateProvider.dayKey()]
+        )
+    }
+
+    private var targetLabel: String {
+        habit.trackingMode == .unit ? "Goal" : "Schedule"
+    }
+
+    private var targetSummary: String {
+        if habit.trackingMode == .unit, let unit = habit.unitConfiguration {
+            let goalBase = HabitCompletionService.goalBaseValue(for: habit)
+            return HabitProgress.formattedDisplay(baseValue: goalBase, unit: unit)
+        }
+        let schedule = WeekdaySet(rawValue: habit.scheduleMask)
+        return "\(schedule.count)/week"
     }
 
     var body: some View {
-        NavigationStack { // Wrap in stack for toolbar items if pushed
+        NavigationStack {
             ScrollView {
                 VStack(spacing: 24) {
-                    // Header Card
-                    VStack(spacing: 16) {
+                    VStack(spacing: 12) {
                         ZStack {
                             Circle()
                                 .fill(AppColors.color(for: habit.colorName).opacity(0.1))
                                 .frame(width: 80, height: 80)
-                                .shadow(color: AppColors.color(for: habit.colorName).opacity(0.3), radius: 20, x: 0, y: 0) // Glow
-                            
+                                .shadow(color: AppColors.color(for: habit.colorName).opacity(0.3), radius: 20, x: 0, y: 0)
+
                             Image(systemName: habit.iconName)
                                 .font(.system(size: 32, weight: .bold))
                                 .foregroundStyle(AppColors.color(for: habit.colorName))
                         }
-                        
+
                         Text(habit.name)
                             .font(.title)
-                            .fontWeight(.black) // Trendy bold
+                            .fontWeight(.black)
                             .foregroundStyle(.white)
-                        
+
+                        if let progress = todayProgressText {
+                            Text(progress)
+                                .font(.headline)
+                                .foregroundStyle(.white.opacity(0.85))
+                        }
+
+                        if !isScheduledToday {
+                            Text("Off day")
+                                .font(.caption)
+                                .fontWeight(.semibold)
+                                .padding(.horizontal, 10)
+                                .padding(.vertical, 4)
+                                .background(AppColors.cardBackground)
+                                .clipShape(Capsule())
+                                .foregroundStyle(.white.opacity(0.8))
+                        }
+
                         if let detail = habit.detail {
                             Text(detail)
                                 .font(.body)
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(.white.opacity(0.7))
                                 .multilineTextAlignment(.center)
                                 .padding(.horizontal)
                         }
                     }
                     .padding(.top, 20)
-                    
-                    // Stats Grid
+
                     LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
-                        StatCard(title: "Current Streak", value: "\(currentStreak) Days", icon: "flame.fill", color: .orange)
-                        StatCard(title: "Total Done", value: "\(habit.completions.count)", icon: "checkmark.circle.fill", color: .green)
-                        StatCard(title: "Consistency", value: completionRate, icon: "chart.pie.fill", color: .blue)
-                        StatCard(title: "Target", value: "\(habit.targetPerWeek)/week", icon: "target", color: .purple)
+                        StatCard(title: "Current Streak", value: "\(streakStats.currentStreak) Days", icon: "flame.fill", color: .orange)
+                        StatCard(title: "Total Done", value: "\(totalCompletions)", icon: "checkmark.circle.fill", color: .green)
+                        StatCard(title: "Consistency", value: completionRateText, icon: "chart.pie.fill", color: .blue)
+                        StatCard(title: targetLabel, value: targetSummary, icon: "target", color: .purple)
                     }
                     .padding(.horizontal)
-                    
-                    // Heatmap
+
                     VStack(alignment: .leading, spacing: 8) {
                         Text("History")
                             .font(.headline)
                             .foregroundStyle(.white)
                             .padding(.leading)
-                        
+
                         ScrollView(.horizontal, showsIndicators: false) {
                             ContributionGraphView(
-                                completions: habit.completions.map { $0.createdAt },
+                                completedDayKeys: completedDayKeys,
                                 color: AppColors.color(for: habit.colorName),
                                 weeksToDisplay: 20
                             )
@@ -98,7 +153,7 @@ struct HabitDetailView: View {
             .background(
                 ZStack {
                     AppColors.primaryBackground
-                    AppColors.color(for: habit.colorName).opacity(0.05).ignoresSafeArea() // Global Tint
+                    AppColors.color(for: habit.colorName).opacity(0.05).ignoresSafeArea()
                 }
             )
             .navigationBarTitleDisplayMode(.inline)
@@ -114,11 +169,10 @@ struct HabitDetailView: View {
             }
         }
     }
-    
-    private func calculateStreak() -> Int {
-        // Placeholder for real algorithm
-        // Sort completions, check consecutive days
-        return 0 
+
+    private func percentString(_ value: Double) -> String {
+        let percentage = Int((value * 100.0).rounded())
+        return "\(percentage)%"
     }
 }
 
@@ -127,7 +181,7 @@ struct StatCard: View {
     let value: String
     let icon: String
     let color: Color
-    
+
     var body: some View {
         VStack(spacing: 8) {
             HStack {
@@ -136,13 +190,13 @@ struct StatCard: View {
                     .font(.system(size: 20))
                 Spacer()
             }
-            
+
             Text(value)
                 .font(.title2)
                 .fontWeight(.bold)
                 .foregroundStyle(.white)
                 .frame(maxWidth: .infinity, alignment: .leading)
-            
+
             Text(title)
                 .font(.caption)
                 .foregroundColor(.white.opacity(0.6))

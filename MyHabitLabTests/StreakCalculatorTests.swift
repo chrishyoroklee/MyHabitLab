@@ -26,12 +26,16 @@ struct StreakCalculatorTests {
         let calendar = makeCalendar()
         let today = makeDate(year: 2026, month: 1, day: 2)
         let yesterday = makeDate(year: 2026, month: 1, day: 1)
-        let completed = Set([
-            DayKey.from(yesterday, calendar: calendar, timeZone: calendar.timeZone)
-        ])
+        let completed: [Int: Int] = [
+            DayKey.from(yesterday, calendar: calendar, timeZone: calendar.timeZone): 1
+        ]
 
         let stats = StreakCalculator.calculate(
-            completedDayKeys: completed,
+            completionValuesByDayKey: completed,
+            trackingMode: .checkmark,
+            goalBaseValue: nil,
+            scheduleMask: WeekdaySet.all.rawValue,
+            extraCompletionPolicy: .totalsOnly,
             today: today,
             calendar: calendar,
             timeZone: calendar.timeZone
@@ -48,16 +52,93 @@ struct StreakCalculatorTests {
             makeDate(year: 2026, month: 1, day: 2),
             makeDate(year: 2026, month: 1, day: 1)
         ]
-        let completed = Set(dates.map { DayKey.from($0, calendar: calendar, timeZone: calendar.timeZone) })
+        let completed = Dictionary(uniqueKeysWithValues: dates.map {
+            (DayKey.from($0, calendar: calendar, timeZone: calendar.timeZone), 1)
+        })
 
         let stats = StreakCalculator.calculate(
-            completedDayKeys: completed,
+            completionValuesByDayKey: completed,
+            trackingMode: .checkmark,
+            goalBaseValue: nil,
+            scheduleMask: WeekdaySet.all.rawValue,
+            extraCompletionPolicy: .totalsOnly,
             today: today,
             calendar: calendar,
             timeZone: calendar.timeZone
         )
 
         #expect(stats.currentStreak == 3)
+    }
+
+    @Test func currentStreakSkipsOffDays() {
+        let calendar = makeCalendar()
+        let today = makeDate(year: 2026, month: 1, day: 7)
+        guard let twoDaysAgo = calendar.date(byAdding: .day, value: -2, to: today) else {
+            #expect(Bool(false), "Failed to build two-days-ago date")
+            return
+        }
+
+        let todaySet = WeekdaySet.from(calendarWeekday: calendar.component(.weekday, from: today))
+        let pastSet = WeekdaySet.from(calendarWeekday: calendar.component(.weekday, from: twoDaysAgo))
+        let schedule = todaySet.union(pastSet)
+
+        let completed: [Int: Int] = [
+            DayKey.from(today, calendar: calendar, timeZone: calendar.timeZone): 1,
+            DayKey.from(twoDaysAgo, calendar: calendar, timeZone: calendar.timeZone): 1
+        ]
+
+        let stats = StreakCalculator.calculate(
+            completionValuesByDayKey: completed,
+            trackingMode: .checkmark,
+            goalBaseValue: nil,
+            scheduleMask: schedule.rawValue,
+            extraCompletionPolicy: .totalsOnly,
+            today: today,
+            calendar: calendar,
+            timeZone: calendar.timeZone
+        )
+
+        #expect(stats.currentStreak == 2)
+    }
+
+    @Test func offDayCompletionCountsForPolicy() {
+        let calendar = makeCalendar()
+        let today = makeDate(year: 2026, month: 1, day: 6)
+        guard let yesterday = calendar.date(byAdding: .day, value: -1, to: today) else {
+            #expect(Bool(false), "Failed to build yesterday date")
+            return
+        }
+
+        let schedule = WeekdaySet.from(calendarWeekday: calendar.component(.weekday, from: yesterday))
+        let completed: [Int: Int] = [
+            DayKey.from(today, calendar: calendar, timeZone: calendar.timeZone): 1,
+            DayKey.from(yesterday, calendar: calendar, timeZone: calendar.timeZone): 1
+        ]
+
+        let optionBStats = StreakCalculator.calculate(
+            completionValuesByDayKey: completed,
+            trackingMode: .checkmark,
+            goalBaseValue: nil,
+            scheduleMask: schedule.rawValue,
+            extraCompletionPolicy: .countTowardStreaks,
+            today: today,
+            calendar: calendar,
+            timeZone: calendar.timeZone
+        )
+
+        let optionCStats = StreakCalculator.calculate(
+            completionValuesByDayKey: completed,
+            trackingMode: .checkmark,
+            goalBaseValue: nil,
+            scheduleMask: schedule.rawValue,
+            extraCompletionPolicy: .totalsOnly,
+            today: today,
+            calendar: calendar,
+            timeZone: calendar.timeZone
+        )
+
+        #expect(optionBStats.currentStreak == 2)
+        #expect(optionCStats.currentStreak == 1)
     }
 
     @Test func longestStreakSkipsGaps() {
@@ -69,10 +150,16 @@ struct StreakCalculatorTests {
             makeDate(year: 2026, month: 1, day: 6),
             makeDate(year: 2026, month: 1, day: 7)
         ]
-        let completed = Set(dates.map { DayKey.from($0, calendar: calendar, timeZone: calendar.timeZone) })
+        let completed = Dictionary(uniqueKeysWithValues: dates.map {
+            (DayKey.from($0, calendar: calendar, timeZone: calendar.timeZone), 1)
+        })
 
         let stats = StreakCalculator.calculate(
-            completedDayKeys: completed,
+            completionValuesByDayKey: completed,
+            trackingMode: .checkmark,
+            goalBaseValue: nil,
+            scheduleMask: WeekdaySet.all.rawValue,
+            extraCompletionPolicy: .totalsOnly,
             today: makeDate(year: 2026, month: 1, day: 7),
             calendar: calendar,
             timeZone: calendar.timeZone
@@ -84,14 +171,18 @@ struct StreakCalculatorTests {
     @Test func completionRateUsesLast30DaysIncludingToday() {
         let calendar = makeCalendar()
         let today = makeDate(year: 2026, month: 1, day: 30)
-        var completed: Set<Int> = []
+        var completed: [Int: Int] = [:]
         for day in 1...15 {
             let date = makeDate(year: 2026, month: 1, day: day)
-            completed.insert(DayKey.from(date, calendar: calendar, timeZone: calendar.timeZone))
+            completed[DayKey.from(date, calendar: calendar, timeZone: calendar.timeZone)] = 1
         }
 
         let stats = StreakCalculator.calculate(
-            completedDayKeys: completed,
+            completionValuesByDayKey: completed,
+            trackingMode: .checkmark,
+            goalBaseValue: nil,
+            scheduleMask: WeekdaySet.all.rawValue,
+            extraCompletionPolicy: .totalsOnly,
             today: today,
             calendar: calendar,
             timeZone: calendar.timeZone

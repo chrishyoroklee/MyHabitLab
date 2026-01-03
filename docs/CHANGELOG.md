@@ -91,3 +91,21 @@ This update transforms MyHabitLab into a premium, hybrid habit tracker inspired 
 - **Icon Glow**: Added a subtle color-matched shadow to the large habit icon.
 - **Consistent Stats**: `StatCard` components now use white text and colored borders.
 - **Heatmap Container**: Styled the history container with the same dark card background and tinted stroke as other elements.
+
+## Data Model Expansion [2026-01-03]
+- **Tracking Modes**: Added checkmark vs unit-based tracking mode with safe defaults.
+- **Unit Goals**: Added base-unit storage (scale + precision) to support decimals while keeping integer persistence.
+- **Schedules & Policies**: Added weekday schedule mask and extra-completion policy (Option B vs C).
+- **Reminders**: Added multi-reminder model and export/import support for reminder data.
+- **Utilities & Tests**: Added schedule and progress utilities with unit conversion tests.
+
+## [2026-01-03 17:00] Group 2 prompts: habit form, progress logic, reminders, iCloud sync
+- **Habit form**: Added tracking mode selector, unit goal inputs, custom weekday schedules, extra-completion policy, and multi-reminder editing with validation.
+- **Completion logic + stats**: Unit-based progress now increments toward goals, streaks/heatmaps are schedule-aware, and off-days are indicated across Dashboard/Detail.
+- **Reminders**: Implemented multi-reminder scheduling (time-of-day + interval windows) with schedule-aware calculation tests.
+- **iCloud sync (opt-in)**: Added Settings toggle with migration via export/import, plus restart prompt and container selection for CloudKit-backed storage.
+
+## [2026-01-03 18:20] Group 3 + 4 prompts: widgets and theme parity
+- **Widgets**: Added a daily summary widget and a per-habit configurable widget with interactive toggles and unit progress support.
+- **Widget sync**: Extended widget snapshots to include unit progress, schedule/policy data, and updated sync logic for unit-aware toggling.
+- **Theme parity**: Applied AppColors backgrounds and readable text styling across forms, lists, and calendar editor for consistent dark theme.

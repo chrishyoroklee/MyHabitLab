@@ -14,13 +14,18 @@ struct HabitCalendarEditorView: View {
                 VStack(alignment: .leading, spacing: 16) {
                     Text("calendar.last_90_days")
                         .font(.headline)
+                        .foregroundStyle(.white)
 
                     LazyVGrid(columns: gridColumns, spacing: 8) {
                         ForEach(dayCells) { cell in
                             Button {
                                 toggleCompletion(for: cell)
                             } label: {
-                                DayCellView(cell: cell, isCompleted: isCompleted(cell))
+                                DayCellView(
+                                    cell: cell,
+                                    isCompleted: isCompleted(cell),
+                                    color: AppColors.color(for: habit.colorName)
+                                )
                             }
                             .buttonStyle(.plain)
                             .accessibilityLabel(accessibilityLabel(for: cell))
@@ -30,6 +35,7 @@ struct HabitCalendarEditorView: View {
                 }
                 .padding()
             }
+            .background(AppColors.primaryBackground)
             .navigationTitle(habit.name)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
@@ -104,15 +110,16 @@ private struct DayCell: Identifiable {
 private struct DayCellView: View {
     let cell: DayCell
     let isCompleted: Bool
+    let color: Color
 
     var body: some View {
         ZStack {
             RoundedRectangle(cornerRadius: 6)
-                .fill(isCompleted ? Color.green.opacity(0.7) : Color.secondary.opacity(0.2))
+                .fill(isCompleted ? color.opacity(0.8) : AppColors.cardBackground)
             Text(dayNumber)
                 .font(.caption2)
                 .minimumScaleFactor(0.6)
-                .foregroundStyle(isCompleted ? .white : .primary)
+                .foregroundStyle(isCompleted ? .white : .white.opacity(0.7))
         }
         .frame(height: 32)
     }

@@ -25,12 +25,24 @@ enum WidgetStoreSync {
     static func updateSnapshot(context: ModelContext, dayKey: Int) {
         let habits = fetchHabits(context: context)
         let snapshots = habits.map { habit in
-            WidgetHabitSnapshot(
+            let completionValues = HabitCompletionService.completionValueByDayKey(for: habit)
+            let completionValue = completionValues[dayKey] ?? 0
+            let isCompletedToday = HabitCompletionService.isComplete(habit: habit, completionValue: completionValue)
+            return WidgetHabitSnapshot(
                 id: habit.id,
                 name: habit.name,
                 iconName: habit.iconName,
                 colorName: habit.colorName,
-                isCompletedToday: habit.completions.contains { $0.dayKey == dayKey }
+                isCompletedToday: isCompletedToday,
+                trackingModeRaw: habit.trackingModeRaw,
+                completionValueBase: completionValue,
+                unitDisplayName: habit.unitDisplayName,
+                unitBaseScale: habit.unitBaseScale,
+                unitDisplayPrecision: habit.unitDisplayPrecision,
+                unitGoalBaseValue: HabitCompletionService.goalBaseValue(for: habit),
+                unitDefaultIncrementBaseValue: HabitCompletionService.defaultIncrementBaseValue(for: habit),
+                scheduleMask: habit.scheduleMask,
+                extraCompletionPolicyRaw: habit.extraCompletionPolicyRaw
             )
         }
         WidgetSharedStore.updateHabits(snapshots)
@@ -63,12 +75,11 @@ enum WidgetStoreSync {
             let results = try context.fetch(descriptor)
             guard let habit = results.first else { return }
 
-            if let existing = habit.completions.first(where: { $0.dayKey == toggle.dayKey }) {
-                context.delete(existing)
-            } else {
-                let completion = Completion(habit: habit, dayKey: toggle.dayKey, value: 1)
-                context.insert(completion)
-            }
+            _ = HabitCompletionService.toggleCompletion(
+                habit: habit,
+                dayKey: toggle.dayKey,
+                context: context
+            )
         } catch {
             assertionFailure("Failed to fetch habit for widget toggle: \(error)")
         }

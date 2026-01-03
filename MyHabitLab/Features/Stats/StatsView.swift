@@ -21,6 +21,7 @@ struct StatsView: View {
                         systemImage: "chart.bar",
                         description: Text("stats.empty.message")
                     )
+                    .foregroundStyle(.white)
                 } else {
                     ScrollView {
                         VStack(alignment: .leading, spacing: 16) {
@@ -38,8 +39,13 @@ struct StatsView: View {
     }
 
     private func stats(for habit: Habit) -> StreakStats {
-        StreakCalculator.calculate(
-            completedDayKeys: Set(habit.completions.map { $0.dayKey }),
+        let completionValues = HabitCompletionService.completionValueByDayKey(for: habit)
+        return StreakCalculator.calculate(
+            completionValuesByDayKey: completionValues,
+            trackingMode: habit.trackingMode,
+            goalBaseValue: habit.unitGoalBaseValue,
+            scheduleMask: habit.scheduleMask,
+            extraCompletionPolicy: habit.extraCompletionPolicy,
             today: dateProvider.now(),
             calendar: dateProvider.calendar,
             timeZone: dateProvider.calendar.timeZone
@@ -54,11 +60,13 @@ struct StatsView: View {
         }
 
         return habits.reduce(0) { total, habit in
-            let count = habit.completions.reduce(0) { partial, completion in
-                guard let date = DayKey.toDate(completion.dayKey, calendar: calendar, timeZone: timeZone) else {
+            let values = HabitCompletionService.completionValueByDayKey(for: habit)
+            let count = values.reduce(0) { partial, entry in
+                guard let date = DayKey.toDate(entry.key, calendar: calendar, timeZone: timeZone) else {
                     return partial
                 }
-                return interval.contains(date) ? partial + 1 : partial
+                guard interval.contains(date) else { return partial }
+                return HabitCompletionService.isComplete(habit: habit, completionValue: entry.value) ? partial + 1 : partial
             }
             return total + count
         }

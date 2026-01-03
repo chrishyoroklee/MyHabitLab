@@ -18,18 +18,14 @@ enum HabitToggleService {
         }
 
         let dayKey = DayKey.from(Date())
-        if let completion = habit.completions.first(where: { $0.dayKey == dayKey }) {
-            context.delete(completion)
-            try context.save()
-            WidgetStoreSync.updateSnapshot(context: context, dayKey: dayKey)
-            return false
-        } else {
-            let completion = Completion(habit: habit, dayKey: dayKey, value: 1)
-            context.insert(completion)
-            try context.save()
-            WidgetStoreSync.updateSnapshot(context: context, dayKey: dayKey)
-            return true
-        }
+        let completion = HabitCompletionService.toggleCompletion(
+            habit: habit,
+            dayKey: dayKey,
+            context: context
+        )
+        try context.save()
+        WidgetStoreSync.updateSnapshot(context: context, dayKey: dayKey)
+        return HabitCompletionService.isComplete(habit: habit, completion: completion)
     }
 }
 
