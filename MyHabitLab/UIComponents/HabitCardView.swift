@@ -74,7 +74,7 @@ struct HabitCardView: View {
 
                             Image(systemName: "checkmark")
                                 .font(.system(size: 14, weight: .bold))
-                                .foregroundColor(.white)
+                                .foregroundColor(AppColors.textOnPrimary)
                         } else {
                             Circle()
                                 .stroke(AppColors.color(for: habit.colorName).opacity(0.3), lineWidth: 2)
