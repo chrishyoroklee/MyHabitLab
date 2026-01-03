@@ -54,7 +54,9 @@ struct SettingsView: View {
                     LabeledContent("settings.about.version", value: versionDescription)
                 }
             }
-            .navigationTitle("settings.title")
+            .scrollContentBackground(.hidden) // Remove system default light/gray background
+            .background(AppColors.primaryBackground) // Force dark background
+
             .fileExporter(
                 isPresented: $isExporting,
                 document: exportDocument,

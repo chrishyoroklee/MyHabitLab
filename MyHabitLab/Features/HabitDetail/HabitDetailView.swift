@@ -1,203 +1,141 @@
 import SwiftUI
 import SwiftData
 import UserNotifications
-import Foundation
 
 struct HabitDetailView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
     @Bindable var habit: Habit
     let dateProvider: DateProvider
-
-    @State private var reminderTime: Date
-    @State private var authorizationStatus: UNAuthorizationStatus = .notDetermined
-    @State private var isShowingPermissionAlert = false
-    @State private var isShowingDeniedAlert = false
-    @State private var isShowingArchiveConfirm = false
-
-    init(habit: Habit, dateProvider: DateProvider) {
-        self.habit = habit
-        self.dateProvider = dateProvider
-        var components = DateComponents()
-        components.hour = habit.reminderHour
-        components.minute = habit.reminderMinute
-        _reminderTime = State(initialValue: Calendar.current.date(from: components) ?? Date())
+    
+    @State private var isShowingEditSheet = false
+    
+    // Stats
+    private var currentStreak: Int {
+        // Simple logic for now
+        return calculateStreak()
+    }
+    
+    private var completionRate: String {
+        let total = habit.completions.count
+        guard total > 0 else { return "0%" }
+        // Simple rate: Completions / Days since creation (approx)
+        let days = Calendar.current.dateComponents([.day], from: habit.createdAt, to: Date()).day ?? 1
+        let rate = Double(total) / Double(max(days, 1)) * 100
+        return String(format: "%.0f%%", rate)
     }
 
     var body: some View {
-        NavigationStack {
-            Form {
-                Section("habit.detail.section.reminder") {
-                    Toggle("habit.field.reminder_toggle", isOn: $habit.reminderEnabled)
-                        .accessibilityLabel(Text("habit.field.reminder_toggle"))
-                    if habit.reminderEnabled {
-                        DatePicker("habit.field.reminder_time", selection: $reminderTime, displayedComponents: .hourAndMinute)
-                            .accessibilityLabel(Text("habit.field.reminder_time"))
-                    }
-                }
-
-                Section("habit.detail.section.status") {
-                    Toggle("habit.detail.toggle.archived", isOn: archiveBinding)
-                        .accessibilityLabel(Text("habit.detail.toggle.archived"))
-                }
-
-                Section("habit.detail.section.history") {
-                    Text("habit.detail.history.last_90_days")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                    HabitHistoryGridView(
-                        entries: historyEntries,
-                        completedDayKeys: completedDayKeys
-                    )
-                }
-            }
-            .navigationTitle(habit.name)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("habit.detail.action.done") {
-                        dismiss()
-                    }
-                }
-            }
-            .task {
-                authorizationStatus = await ReminderScheduler.authorizationStatus()
-            }
-            .onChange(of: habit.reminderEnabled) { _, newValue in
-                handleReminderToggle(newValue)
-            }
-            .onChange(of: reminderTime) { _, _ in
-                updateReminderTime()
-            }
-            .alert("permission.notifications.title", isPresented: $isShowingPermissionAlert) {
-                Button("permission.notifications.not_now", role: .cancel) {
-                    habit.reminderEnabled = false
-                }
-                Button("permission.notifications.allow") {
-                    Task {
-                        let granted = await ReminderScheduler.requestAuthorization()
-                        authorizationStatus = await ReminderScheduler.authorizationStatus()
-                        if granted == false {
-                            habit.reminderEnabled = false
-                            isShowingDeniedAlert = true
+        NavigationStack { // Wrap in stack for toolbar items if pushed
+            ScrollView {
+                VStack(spacing: 24) {
+                    // Header Card
+                    VStack(spacing: 16) {
+                        ZStack {
+                            Circle()
+                                .fill(AppColors.color(for: habit.colorName).opacity(0.1))
+                                .frame(width: 80, height: 80)
+                            
+                            Image(systemName: habit.iconName)
+                                .font(.system(size: 32, weight: .semibold))
+                                .foregroundStyle(AppColors.color(for: habit.colorName))
                         }
-                        await persistAndSchedule()
+                        
+                        Text(habit.name)
+                            .font(.title)
+                            .fontWeight(.bold)
+                        
+                        if let detail = habit.detail {
+                            Text(detail)
+                                .font(.body)
+                                .foregroundStyle(.secondary)
+                                .multilineTextAlignment(.center)
+                                .padding(.horizontal)
+                        }
+                    }
+                    .padding(.top, 20)
+                    
+                    // Stats Grid
+                    LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
+                        StatCard(title: "Current Streak", value: "\(currentStreak) Days", icon: "flame.fill", color: .orange)
+                        StatCard(title: "Total Done", value: "\(habit.completions.count)", icon: "checkmark.circle.fill", color: .green)
+                        StatCard(title: "Consistency", value: completionRate, icon: "chart.pie.fill", color: .blue)
+                        StatCard(title: "Target", value: "\(habit.targetPerWeek)/week", icon: "target", color: .purple)
+                    }
+                    .padding(.horizontal)
+                    
+                    // Heatmap
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("History")
+                            .font(.headline)
+                            .padding(.leading)
+                        
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            ContributionGraphView(
+                                completions: habit.completions.map { $0.createdAt },
+                                color: AppColors.color(for: habit.colorName),
+                                weeksToDisplay: 20
+                            )
+                            .padding(.horizontal)
+                        }
+                    }
+                    .padding(.vertical)
+                    .background(Color.secondary.opacity(0.05))
+                    .cornerRadius(12)
+                    .padding(.horizontal)
+
+                    Spacer()
+                }
+            }
+            .background(AppColors.primaryBackground)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .primaryAction) {
+                    Button("Edit") {
+                        isShowingEditSheet = true
                     }
                 }
-            } message: {
-                Text("permission.notifications.message")
             }
-            .alert("permission.notifications.denied_title", isPresented: $isShowingDeniedAlert) {
-                Button("action.ok", role: .cancel) {}
-            } message: {
-                Text("permission.notifications.denied_message")
-            }
-            .confirmationDialog("habit.detail.alert.archive_title", isPresented: $isShowingArchiveConfirm) {
-                Button("habit.detail.action.archive", role: .destructive) {
-                    habit.isArchived = true
-                    Task {
-                        await persistAndSchedule()
-                        WidgetStoreSync.updateSnapshot(
-                            context: modelContext,
-                            dayKey: DayKey.from(Date())
-                        )
-                        dismiss()
-                    }
-                }
-                Button("action.cancel", role: .cancel) {}
-            } message: {
-                Text("habit.detail.alert.archive_message")
+            .sheet(isPresented: $isShowingEditSheet) {
+                HabitFormView(habit: habit)
             }
         }
     }
-
-    private var archiveBinding: Binding<Bool> {
-        Binding(
-            get: { habit.isArchived },
-            set: { newValue in
-                if newValue {
-                    isShowingArchiveConfirm = true
-                } else {
-                    habit.isArchived = false
-                    Task {
-                        await persistAndSchedule()
-                        WidgetStoreSync.updateSnapshot(
-                            context: modelContext,
-                            dayKey: DayKey.from(Date())
-                        )
-                    }
-                }
-            }
-        )
-    }
-
-    private func handleReminderToggle(_ enabled: Bool) {
-        guard enabled else {
-            Task { await persistAndSchedule() }
-            return
-        }
-
-        if authorizationStatus == .notDetermined {
-            isShowingPermissionAlert = true
-        } else if authorizationStatus == .denied {
-            habit.reminderEnabled = false
-            isShowingDeniedAlert = true
-        } else {
-            Task { await persistAndSchedule() }
-        }
-    }
-
-    private func updateReminderTime() {
-        let components = Calendar.current.dateComponents([.hour, .minute], from: reminderTime)
-        habit.reminderHour = components.hour ?? habit.reminderHour
-        habit.reminderMinute = components.minute ?? habit.reminderMinute
-        Task { await persistAndSchedule() }
-    }
-
-    private var historyEntries: [DayKeyEntry] {
-        DayKeyRange.lastNDays(
-            endingOn: dateProvider.now(),
-            count: 90,
-            calendar: dateProvider.calendar,
-            timeZone: dateProvider.calendar.timeZone
-        )
-    }
-
-    private var completedDayKeys: Set<Int> {
-        Set(habit.completions.map { $0.dayKey })
-    }
-
-    @MainActor
-    private func persistAndSchedule() async {
-        do {
-            try modelContext.save()
-        } catch {
-            assertionFailure("Failed to save habit reminder: \(error)")
-        }
-        await ReminderScheduler.update(for: habit)
+    
+    private func calculateStreak() -> Int {
+        // Placeholder for real algorithm
+        // Sort completions, check consecutive days
+        return 0 
     }
 }
 
-private struct HabitHistoryGridView: View {
-    let entries: [DayKeyEntry]
-    let completedDayKeys: Set<Int>
-
-    private let columns = Array(repeating: GridItem(.flexible(), spacing: 6), count: 7)
-
+struct StatCard: View {
+    let title: String
+    let value: String
+    let icon: String
+    let color: Color
+    
     var body: some View {
-        LazyVGrid(columns: columns, spacing: 6) {
-            ForEach(entries) { entry in
-                let isCompleted = completedDayKeys.contains(entry.dayKey)
-                RoundedRectangle(cornerRadius: 3)
-                    .fill(isCompleted ? Color.green.opacity(0.8) : Color.secondary.opacity(0.2))
-                    .frame(height: 14)
-                    .accessibilityLabel(Text(accessibilityLabel(for: entry)))
-                    .accessibilityValue(Text(isCompleted ? "calendar.accessibility.completed" : "calendar.accessibility.not_completed"))
+        VStack(spacing: 8) {
+            HStack {
+                Image(systemName: icon)
+                    .foregroundColor(color)
+                Spacer()
             }
+            
+            Text(value)
+                .font(.title2)
+                .fontWeight(.bold)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            
+            Text(title)
+                .font(.caption)
+                .foregroundColor(.secondary)
+                .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-    }
-
-    private func accessibilityLabel(for entry: DayKeyEntry) -> String {
-        entry.date.formatted(.dateTime.weekday(.abbreviated).month().day().year())
+        .padding()
+        .background(Color(UIColor.secondarySystemGroupedBackground))
+        .cornerRadius(12)
+        .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
     }
 }

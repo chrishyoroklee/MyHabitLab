@@ -33,7 +33,7 @@ struct StatsView: View {
                     }
                 }
             }
-            .navigationTitle("stats.title")
+            .background(AppColors.primaryBackground) // Force dark background
         }
     }
 
@@ -78,7 +78,7 @@ private struct WeeklySummaryCard: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding()
-        .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 12))
+        .background(AppColors.cardBackground, in: RoundedRectangle(cornerRadius: 12)) // Dark card
     }
 }
 
@@ -108,7 +108,7 @@ private struct HabitStatsCard: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding()
-        .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 12))
+        .background(AppColors.cardBackground, in: RoundedRectangle(cornerRadius: 12)) // Dark card
     }
 
     private func percentString(_ value: Double) -> String {
@@ -135,6 +135,6 @@ private struct StatChip: View {
                 .fontWeight(.semibold)
         }
         .padding(8)
-        .background(Color(.tertiarySystemFill), in: RoundedRectangle(cornerRadius: 8))
+        .background(Color.white.opacity(0.05), in: RoundedRectangle(cornerRadius: 8)) // Subtle chip background
     }
 }

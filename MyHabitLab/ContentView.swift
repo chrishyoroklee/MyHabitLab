@@ -9,22 +9,31 @@ import SwiftUI
 
 struct ContentView: View {
     let dateProvider: DateProvider
+    @State private var selectedTab: Tab = .dashboard
 
     var body: some View {
-        TabView {
-            DashboardView(dateProvider: dateProvider)
-                .tabItem {
-                    Label("tab.dashboard", systemImage: "square.grid.2x2")
-                }
-            StatsView(dateProvider: dateProvider)
-                .tabItem {
-                    Label("tab.stats", systemImage: "chart.bar")
-                }
-            SettingsView()
-                .tabItem {
-                    Label("tab.settings", systemImage: "gearshape")
-                }
+        ZStack(alignment: .bottom) {
+            TabView(selection: $selectedTab) {
+                DashboardView(dateProvider: dateProvider)
+                    .tag(Tab.dashboard)
+                    .toolbar(.hidden, for: .tabBar) // Hide system bar
+                
+                StatsView(dateProvider: dateProvider)
+                    .tag(Tab.stats)
+                    .toolbar(.hidden, for: .tabBar)
+                
+                SettingsView()
+                    .tag(Tab.settings)
+                    .toolbar(.hidden, for: .tabBar)
+            }
+            .accentColor(AppColors.neonPurple) // Just in case
+            
+            // Custom Floating Tab Bar
+            CustomTabBar(selectedTab: $selectedTab)
+                .padding(.bottom, 20)
         }
+        .background(AppColors.primaryBackground)
+        .ignoresSafeArea(.keyboard) // Prevent tab bar from moving up with keyboard
     }
 }
 

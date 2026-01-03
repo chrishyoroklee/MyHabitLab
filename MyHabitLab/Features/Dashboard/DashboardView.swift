@@ -22,46 +22,65 @@ struct DashboardView: View {
         let today = dateProvider.today()
         let dayKey = todayKey == 0 ? dateProvider.dayKey() : todayKey
         return NavigationStack {
-            Group {
-                if habits.isEmpty {
-                    ContentUnavailableView(
-                        "dashboard.no_habits_title",
-                        systemImage: "checkmark.circle",
-                        description: Text("dashboard.no_habits_message")
-                    )
-                } else {
-                    List {
-                        Section {
+            ScrollView {
+                VStack(spacing: 24) {
+                    // Header (Date only)
+                    HStack {
+                        VStack(alignment: .leading) {
+                            Text(today.displayTitle)
+                                .font(.title3)
+                                .fontWeight(.medium)
+                                .foregroundStyle(.secondary)
+                        }
+                        Spacer()
+                    }
+                    .padding(.horizontal)
+                    .padding(.top, 10)
+
+                    if habits.isEmpty {
+                        ContentUnavailableView(
+                            "dashboard.no_habits_title",
+                            systemImage: "checkmark.circle",
+                            description: Text("dashboard.no_habits_message")
+                        )
+                        .padding(.top, 40)
+                    } else {
+                        LazyVStack(spacing: 16) {
                             ForEach(habits) { habit in
-                                HabitRow(
+                                HabitCardView(
                                     habit: habit,
-                                    isCompleted: completionByHabitId[habit.id] != nil,
-                                    onToggle: {
+                                    isCompletedToday: completionByHabitId[habit.id] != nil,
+                                    toggleAction: {
                                         toggleCompletion(for: habit, dayKey: dayKey)
-                                    },
-                                    onShowHistory: {
-                                        editingHabit = habit
-                                    },
-                                    onShowDetail: {
-                                        detailHabit = habit
                                     }
                                 )
+                                .onTapGesture {
+                                    // Open detail on card tap (excluding the check button which captures its own tap)
+                                    detailHabit = habit
+                                }
+                                .contextMenu {
+                                    Button {
+                                        editingHabit = habit
+                                    } label: {
+                                        Label("Edit", systemImage: "pencil")
+                                    }
+                                }
                             }
-                        } header: {
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text("dashboard.section.today")
-                                    .font(.headline)
-                                Text(today.displayTitle)
-                                    .font(.subheadline)
-                                    .foregroundStyle(.secondary)
-                            }
-                            .textCase(nil)
                         }
+                        .padding(.horizontal)
+                        .padding(.bottom, 40)
                     }
                 }
             }
-            .navigationTitle("dashboard.title")
+            .background(AppColors.primaryBackground)
             .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Text("MyHabitLab")
+                        .font(.title3)
+                        .fontWeight(.black) // Make it even bolder/branding-like
+                        .fontDesign(.rounded) // A nice touch for "Lab" vibe
+                        .fixedSize()
+                }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
                         isPresentingNewHabit = true
@@ -74,7 +93,7 @@ struct DashboardView: View {
             .sheet(isPresented: $isPresentingNewHabit, onDismiss: {
                 refreshCompletions()
             }) {
-                NewHabitSheet()
+                HabitFormView()
             }
             .sheet(item: $editingHabit, onDismiss: {
                 refreshCompletions()
@@ -139,85 +158,4 @@ struct DashboardView: View {
     }
 }
 
-struct HabitRow: View {
-    let habit: Habit
-    let isCompleted: Bool
-    let onToggle: () -> Void
-    let onShowHistory: () -> Void
-    let onShowDetail: () -> Void
 
-    var body: some View {
-        HStack(spacing: 12) {
-            HabitIconView(
-                name: habit.name,
-                iconName: habit.iconName,
-                colorName: habit.colorName
-            )
-            Text(habit.name)
-                .lineLimit(2)
-                .layoutPriority(1)
-            Spacer()
-            Button {
-                onToggle()
-            } label: {
-                Image(systemName: isCompleted ? "checkmark.circle.fill" : "circle")
-                    .imageScale(.large)
-                    .foregroundStyle(isCompleted ? .green : .secondary)
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel(Text(isCompleted ? "dashboard.accessibility.mark_not_completed" : "dashboard.accessibility.mark_completed"))
-            .accessibilityValue(Text(isCompleted ? "calendar.accessibility.completed" : "calendar.accessibility.not_completed"))
-            Button {
-                onShowHistory()
-            } label: {
-                Image(systemName: "calendar")
-                    .imageScale(.medium)
-                    .foregroundStyle(.secondary)
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel(Text("dashboard.action.edit_history"))
-            Button {
-                onShowDetail()
-            } label: {
-                Image(systemName: "info.circle")
-                    .imageScale(.medium)
-                    .foregroundStyle(.secondary)
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel(Text("dashboard.action.edit_habit"))
-        }
-        .contentShape(Rectangle())
-    }
-}
-
-struct HabitIconView: View {
-    let name: String
-    let iconName: String
-    let colorName: String
-
-    var body: some View {
-        ZStack {
-            Circle()
-                .fill(color.opacity(0.2))
-            if iconName.isEmpty {
-                Text(initial)
-                    .font(.headline)
-                    .foregroundStyle(color)
-            } else {
-                Image(systemName: iconName)
-                    .font(.headline)
-                    .foregroundStyle(color)
-            }
-        }
-        .frame(width: 36, height: 36)
-    }
-
-    private var initial: String {
-        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
-        return trimmed.isEmpty ? "H" : String(trimmed.prefix(1)).uppercased()
-    }
-
-    private var color: Color {
-        HabitPalette.color(for: colorName)
-    }
-}

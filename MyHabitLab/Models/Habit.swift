@@ -16,12 +16,15 @@ final class Habit: Identifiable {
     @Relationship(deleteRule: .cascade)
     var completions: [Completion]
 
+    var targetPerWeek: Int = 7
+    
     init(
         id: UUID = UUID(),
         name: String,
         iconName: String = "checkmark.circle",
         colorName: String = "Blue",
         detail: String? = nil,
+        targetPerWeek: Int = 7,  // Default to daily
         reminderEnabled: Bool = false,
         reminderHour: Int = 9,
         reminderMinute: Int = 0,
@@ -34,6 +37,7 @@ final class Habit: Identifiable {
         self.iconName = iconName
         self.colorName = colorName
         self.detail = detail
+        self.targetPerWeek = targetPerWeek
         self.reminderEnabled = reminderEnabled
         self.reminderHour = reminderHour
         self.reminderMinute = reminderMinute
