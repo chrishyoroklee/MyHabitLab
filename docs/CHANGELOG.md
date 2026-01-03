@@ -78,3 +78,16 @@ This update transforms MyHabitLab into a premium, hybrid habit tracker inspired 
 - **Text Visibility**: Forced key text elements (Title, Frequency, Consistency Label) to use explicit White (`Color.white` and opacity variants) instead of system defaults to ensure perfect legibility on dark cards.
 - **Dynamic Card Tinting**: Each habit card now has a subtle background tint (3% opacity) and border stroke (15% opacity) matching its specific habit color, satisfying the "varying color" requirement while maintaining a unified dark theme.
 - **Button Styling**: Updated the incomplete state of the check button to use the habit's color for the ring instead of gray, making interactions feel more distinct.
+
+## Stats View Polish [2026-01-03 10:31]
+- **Card Consistency**: Applied the same "HabitKit" styling to `StatsView` cards:
+  - Background Tint (5% opacity of habit color).
+  - Colored Border (20% opacity of habit color).
+  - Explicit White Text for Titles and Stats.
+- **Detailed Chips**: Updated the Statistics Chips (Streak, etc.) to have a dedicated border matching the habit color, reinforcing the connection between the stat and the habit type.
+
+## Detail View Color Match [2026-01-03 10:35]
+- **Immersive Tint**: The `HabitDetailView` now applies a global 5% tint of the specific habit's color to the entire screen background, creating an immersive "pop up" feel that matches the dashboard card.
+- **Icon Glow**: Added a subtle color-matched shadow to the large habit icon.
+- **Consistent Stats**: `StatCard` components now use white text and colored borders.
+- **Heatmap Container**: Styled the history container with the same dark card background and tinted stroke as other elements.

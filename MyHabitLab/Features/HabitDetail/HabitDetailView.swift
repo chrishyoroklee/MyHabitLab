@@ -35,15 +35,17 @@ struct HabitDetailView: View {
                             Circle()
                                 .fill(AppColors.color(for: habit.colorName).opacity(0.1))
                                 .frame(width: 80, height: 80)
+                                .shadow(color: AppColors.color(for: habit.colorName).opacity(0.3), radius: 20, x: 0, y: 0) // Glow
                             
                             Image(systemName: habit.iconName)
-                                .font(.system(size: 32, weight: .semibold))
+                                .font(.system(size: 32, weight: .bold))
                                 .foregroundStyle(AppColors.color(for: habit.colorName))
                         }
                         
                         Text(habit.name)
                             .font(.title)
-                            .fontWeight(.bold)
+                            .fontWeight(.black) // Trendy bold
+                            .foregroundStyle(.white)
                         
                         if let detail = habit.detail {
                             Text(detail)
@@ -68,6 +70,7 @@ struct HabitDetailView: View {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("History")
                             .font(.headline)
+                            .foregroundStyle(.white)
                             .padding(.leading)
                         
                         ScrollView(.horizontal, showsIndicators: false) {
@@ -80,14 +83,24 @@ struct HabitDetailView: View {
                         }
                     }
                     .padding(.vertical)
-                    .background(Color.secondary.opacity(0.05))
+                    .background(AppColors.cardBackground)
                     .cornerRadius(12)
                     .padding(.horizontal)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(AppColors.color(for: habit.colorName).opacity(0.2), lineWidth: 1)
+                            .padding(.horizontal)
+                    )
 
                     Spacer()
                 }
             }
-            .background(AppColors.primaryBackground)
+            .background(
+                ZStack {
+                    AppColors.primaryBackground
+                    AppColors.color(for: habit.colorName).opacity(0.05).ignoresSafeArea() // Global Tint
+                }
+            )
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
@@ -120,22 +133,28 @@ struct StatCard: View {
             HStack {
                 Image(systemName: icon)
                     .foregroundColor(color)
+                    .font(.system(size: 20))
                 Spacer()
             }
             
             Text(value)
                 .font(.title2)
                 .fontWeight(.bold)
+                .foregroundStyle(.white)
                 .frame(maxWidth: .infinity, alignment: .leading)
             
             Text(title)
                 .font(.caption)
-                .foregroundColor(.secondary)
+                .foregroundColor(.white.opacity(0.6))
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
         .padding()
-        .background(Color(UIColor.secondarySystemGroupedBackground))
+        .background(AppColors.cardBackground)
         .cornerRadius(12)
-        .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(color.opacity(0.3), lineWidth: 1)
+        )
+        .shadow(color: Color.black.opacity(0.1), radius: 4, x: 0, y: 2)
     }
 }
