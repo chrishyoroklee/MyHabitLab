@@ -8,63 +8,8 @@ struct HabitDetailView: View {
     @State private var isShowingEditSheet = false
     @State private var isShowingHistory = false
 
-    private var completionValues: [Int: Int] {
-        HabitCompletionService.completionValueByDayKey(for: habit)
-    }
-
-    private var completedDayKeys: Set<Int> {
-        HabitCompletionService.completedDayKeys(for: habit)
-    }
-
-    private var streakStats: StreakStats {
-        StreakCalculator.calculate(
-            completionValuesByDayKey: completionValues,
-            trackingMode: habit.trackingMode,
-            goalBaseValue: habit.unitGoalBaseValue,
-            scheduleMask: habit.scheduleMask,
-            extraCompletionPolicy: habit.extraCompletionPolicy,
-            today: dateProvider.now(),
-            calendar: dateProvider.calendar,
-            timeZone: dateProvider.calendar.timeZone
-        )
-    }
-
-    private var totalCompletions: Int {
-        completionValues.reduce(0) { partial, entry in
-            HabitCompletionService.isComplete(habit: habit, completionValue: entry.value) ? partial + 1 : partial
-        }
-    }
-
-    private var completionRateText: String {
-        percentString(streakStats.completionRateLast30Days)
-    }
-
-    private var isScheduledToday: Bool {
-        HabitSchedule.isScheduled(
-            on: dateProvider.today().start,
-            scheduleMask: habit.scheduleMask,
-            calendar: dateProvider.calendar
-        )
-    }
-
-    private var todayProgressText: String? {
-        HabitCompletionService.progressText(
-            habit: habit,
-            completionValue: completionValues[dateProvider.dayKey()]
-        )
-    }
-
-    private var targetLabel: String {
-        habit.trackingMode == .unit ? "Goal" : "Schedule"
-    }
-
-    private var targetSummary: String {
-        if habit.trackingMode == .unit, let unit = habit.unitConfiguration {
-            let goalBase = HabitCompletionService.goalBaseValue(for: habit)
-            return HabitProgress.formattedDisplay(baseValue: goalBase, unit: unit)
-        }
-        let schedule = WeekdaySet(rawValue: habit.scheduleMask)
-        return "\(schedule.count)/week"
+    private var viewModel: HabitDetailViewModel {
+        HabitDetailViewModel(habit: habit, dateProvider: dateProvider)
     }
 
     var body: some View {
@@ -88,13 +33,13 @@ struct HabitDetailView: View {
                             .fontWeight(.black)
                             .foregroundStyle(AppColors.textOnPrimary)
 
-                        if let progress = todayProgressText {
+                        if let progress = viewModel.todayProgressText {
                             Text(progress)
                                 .font(.headline)
                                 .foregroundStyle(AppColors.textOnPrimary.opacity(0.85))
                         }
 
-                        if !isScheduledToday {
+                        if !viewModel.isScheduledToday {
                             Text("Off day")
                                 .font(.caption)
                                 .fontWeight(.semibold)
@@ -116,10 +61,10 @@ struct HabitDetailView: View {
                     .padding(.top, 20)
 
                     LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
-                        StatCard(title: "Current Streak", value: "\(streakStats.currentStreak) Days", icon: "flame.fill", color: .orange)
-                        StatCard(title: "Total Done", value: "\(totalCompletions)", icon: "checkmark.circle.fill", color: .green)
-                        StatCard(title: "Consistency", value: completionRateText, icon: "chart.pie.fill", color: .blue)
-                        StatCard(title: targetLabel, value: targetSummary, icon: "target", color: .purple)
+                        StatCard(title: "Current Streak", value: "\(viewModel.streakStats.currentStreak) Days", icon: "flame.fill", color: .orange)
+                        StatCard(title: "Total Done", value: "\(viewModel.totalCompletions)", icon: "checkmark.circle.fill", color: .green)
+                        StatCard(title: "Consistency", value: viewModel.completionRateText, icon: "chart.pie.fill", color: .blue)
+                        StatCard(title: viewModel.targetLabel, value: viewModel.targetSummary, icon: "target", color: .purple)
                     }
                     .padding(.horizontal)
 
@@ -149,7 +94,7 @@ struct HabitDetailView: View {
 
                         ScrollView(.horizontal, showsIndicators: false) {
                             ContributionGraphView(
-                                completedDayKeys: completedDayKeys,
+                                completedDayKeys: viewModel.completedDayKeys,
                                 color: AppColors.color(for: habit.colorName),
                                 weeksToDisplay: 20
                             )
@@ -192,10 +137,6 @@ struct HabitDetailView: View {
         }
     }
 
-    private func percentString(_ value: Double) -> String {
-        let percentage = Int((value * 100.0).rounded())
-        return "\(percentage)%"
-    }
 }
 
 struct StatCard: View {
