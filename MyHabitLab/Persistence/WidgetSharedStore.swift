@@ -6,6 +6,82 @@ struct WidgetHabitSnapshot: Codable, Identifiable, Hashable {
     let iconName: String
     let colorName: String
     let isCompletedToday: Bool
+    let trackingModeRaw: String
+    let completionValueBase: Int
+    let unitDisplayName: String?
+    let unitBaseScale: Int
+    let unitDisplayPrecision: Int
+    let unitGoalBaseValue: Int
+    let unitDefaultIncrementBaseValue: Int
+    let scheduleMask: Int
+    let extraCompletionPolicyRaw: String
+
+    init(
+        id: UUID,
+        name: String,
+        iconName: String,
+        colorName: String,
+        isCompletedToday: Bool,
+        trackingModeRaw: String,
+        completionValueBase: Int,
+        unitDisplayName: String?,
+        unitBaseScale: Int,
+        unitDisplayPrecision: Int,
+        unitGoalBaseValue: Int,
+        unitDefaultIncrementBaseValue: Int,
+        scheduleMask: Int,
+        extraCompletionPolicyRaw: String
+    ) {
+        self.id = id
+        self.name = name
+        self.iconName = iconName
+        self.colorName = colorName
+        self.isCompletedToday = isCompletedToday
+        self.trackingModeRaw = trackingModeRaw
+        self.completionValueBase = completionValueBase
+        self.unitDisplayName = unitDisplayName
+        self.unitBaseScale = unitBaseScale
+        self.unitDisplayPrecision = unitDisplayPrecision
+        self.unitGoalBaseValue = unitGoalBaseValue
+        self.unitDefaultIncrementBaseValue = unitDefaultIncrementBaseValue
+        self.scheduleMask = scheduleMask
+        self.extraCompletionPolicyRaw = extraCompletionPolicyRaw
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(UUID.self, forKey: .id)
+        name = try container.decode(String.self, forKey: .name)
+        iconName = try container.decode(String.self, forKey: .iconName)
+        colorName = try container.decode(String.self, forKey: .colorName)
+        isCompletedToday = try container.decodeIfPresent(Bool.self, forKey: .isCompletedToday) ?? false
+        trackingModeRaw = try container.decodeIfPresent(String.self, forKey: .trackingModeRaw) ?? HabitTrackingMode.checkmark.rawValue
+        completionValueBase = try container.decodeIfPresent(Int.self, forKey: .completionValueBase) ?? (isCompletedToday ? 1 : 0)
+        unitDisplayName = try container.decodeIfPresent(String.self, forKey: .unitDisplayName)
+        unitBaseScale = try container.decodeIfPresent(Int.self, forKey: .unitBaseScale) ?? 1
+        unitDisplayPrecision = try container.decodeIfPresent(Int.self, forKey: .unitDisplayPrecision) ?? 0
+        unitGoalBaseValue = try container.decodeIfPresent(Int.self, forKey: .unitGoalBaseValue) ?? 1
+        unitDefaultIncrementBaseValue = try container.decodeIfPresent(Int.self, forKey: .unitDefaultIncrementBaseValue) ?? 1
+        scheduleMask = try container.decodeIfPresent(Int.self, forKey: .scheduleMask) ?? WeekdaySet.all.rawValue
+        extraCompletionPolicyRaw = try container.decodeIfPresent(String.self, forKey: .extraCompletionPolicyRaw) ?? ExtraCompletionPolicy.totalsOnly.rawValue
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case id
+        case name
+        case iconName
+        case colorName
+        case isCompletedToday
+        case trackingModeRaw
+        case completionValueBase
+        case unitDisplayName
+        case unitBaseScale
+        case unitDisplayPrecision
+        case unitGoalBaseValue
+        case unitDefaultIncrementBaseValue
+        case scheduleMask
+        case extraCompletionPolicyRaw
+    }
 }
 
 struct WidgetPendingToggle: Codable, Hashable {

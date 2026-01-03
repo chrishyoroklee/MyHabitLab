@@ -24,7 +24,6 @@ struct DashboardView: View {
         return NavigationStack {
             ScrollView {
                 VStack(spacing: 24) {
-                    // Header (Date only)
                     HStack {
                         VStack(alignment: .leading) {
                             Text(today.displayTitle)
@@ -47,22 +46,40 @@ struct DashboardView: View {
                     } else {
                         LazyVStack(spacing: 16) {
                             ForEach(habits) { habit in
+                                let completion = completionByHabitId[habit.id]
+                                let isScheduledToday = HabitSchedule.isScheduled(
+                                    on: today.start,
+                                    scheduleMask: habit.scheduleMask,
+                                    calendar: dateProvider.calendar
+                                )
+                                let isCompletedToday = HabitCompletionService.isComplete(
+                                    habit: habit,
+                                    completion: completion
+                                )
+                                let progressText = HabitCompletionService.progressText(
+                                    habit: habit,
+                                    completionValue: completion?.value
+                                )
+                                let completedDayKeys = HabitCompletionService.completedDayKeys(for: habit)
+
                                 HabitCardView(
                                     habit: habit,
-                                    isCompletedToday: completionByHabitId[habit.id] != nil,
+                                    isCompletedToday: isCompletedToday,
+                                    isScheduledToday: isScheduledToday,
+                                    progressText: progressText,
+                                    completedDayKeys: completedDayKeys,
                                     toggleAction: {
                                         toggleCompletion(for: habit, dayKey: dayKey)
                                     }
                                 )
                                 .onTapGesture {
-                                    // Open detail on card tap (excluding the check button which captures its own tap)
                                     detailHabit = habit
                                 }
                                 .contextMenu {
                                     Button {
                                         editingHabit = habit
                                     } label: {
-                                        Label("Edit", systemImage: "pencil")
+                                        Label("dashboard.action.edit_history", systemImage: "calendar")
                                     }
                                 }
                             }
@@ -77,8 +94,8 @@ struct DashboardView: View {
                 ToolbarItem(placement: .topBarLeading) {
                     Text("MyHabitLab")
                         .font(.title3)
-                        .fontWeight(.black) // Make it even bolder/branding-like
-                        .fontDesign(.rounded) // A nice touch for "Lab" vibe
+                        .fontWeight(.black)
+                        .fontDesign(.rounded)
                         .fixedSize()
                 }
                 ToolbarItem(placement: .topBarTrailing) {
@@ -127,7 +144,13 @@ struct DashboardView: View {
             var map: [UUID: Completion] = [:]
             for completion in completions {
                 guard let habitId = completion.habit?.id else { continue }
-                map[habitId] = completion
+                if let existing = map[habitId] {
+                    if completion.value > existing.value {
+                        map[habitId] = completion
+                    }
+                } else {
+                    map[habitId] = completion
+                }
             }
             completionByHabitId = map
         } catch {
@@ -136,15 +159,14 @@ struct DashboardView: View {
     }
 
     @MainActor
-    private func toggleCompletion(for habit: Habit, dayKey: Int) {
-        if let existing = completionByHabitId[habit.id] {
-            modelContext.delete(existing)
-            completionByHabitId[habit.id] = nil
-        } else {
-            let completion = Completion(habit: habit, dayKey: dayKey, value: 1)
-            modelContext.insert(completion)
-            completionByHabitId[habit.id] = completion
-        }
+    private func toggleCompletion(for habit: Habit, dayKey: Int) -> Bool {
+        let completion = HabitCompletionService.toggleCompletion(
+            habit: habit,
+            dayKey: dayKey,
+            context: modelContext
+        )
+
+        completionByHabitId[habit.id] = completion
 
         do {
             try modelContext.save()
@@ -155,7 +177,7 @@ struct DashboardView: View {
         } catch {
             assertionFailure("Failed to toggle completion: \(error)")
         }
+
+        return HabitCompletionService.isComplete(habit: habit, completion: completion)
     }
 }
-
-

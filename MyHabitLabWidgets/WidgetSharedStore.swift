@@ -7,6 +7,82 @@ struct WidgetHabitSnapshot: Codable, Identifiable, Hashable {
     let iconName: String
     let colorName: String
     let isCompletedToday: Bool
+    let trackingModeRaw: String
+    let completionValueBase: Int
+    let unitDisplayName: String?
+    let unitBaseScale: Int
+    let unitDisplayPrecision: Int
+    let unitGoalBaseValue: Int
+    let unitDefaultIncrementBaseValue: Int
+    let scheduleMask: Int
+    let extraCompletionPolicyRaw: String
+
+    init(
+        id: UUID,
+        name: String,
+        iconName: String,
+        colorName: String,
+        isCompletedToday: Bool,
+        trackingModeRaw: String,
+        completionValueBase: Int,
+        unitDisplayName: String?,
+        unitBaseScale: Int,
+        unitDisplayPrecision: Int,
+        unitGoalBaseValue: Int,
+        unitDefaultIncrementBaseValue: Int,
+        scheduleMask: Int,
+        extraCompletionPolicyRaw: String
+    ) {
+        self.id = id
+        self.name = name
+        self.iconName = iconName
+        self.colorName = colorName
+        self.isCompletedToday = isCompletedToday
+        self.trackingModeRaw = trackingModeRaw
+        self.completionValueBase = completionValueBase
+        self.unitDisplayName = unitDisplayName
+        self.unitBaseScale = unitBaseScale
+        self.unitDisplayPrecision = unitDisplayPrecision
+        self.unitGoalBaseValue = unitGoalBaseValue
+        self.unitDefaultIncrementBaseValue = unitDefaultIncrementBaseValue
+        self.scheduleMask = scheduleMask
+        self.extraCompletionPolicyRaw = extraCompletionPolicyRaw
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(UUID.self, forKey: .id)
+        name = try container.decode(String.self, forKey: .name)
+        iconName = try container.decode(String.self, forKey: .iconName)
+        colorName = try container.decode(String.self, forKey: .colorName)
+        isCompletedToday = try container.decodeIfPresent(Bool.self, forKey: .isCompletedToday) ?? false
+        trackingModeRaw = try container.decodeIfPresent(String.self, forKey: .trackingModeRaw) ?? "checkmark"
+        completionValueBase = try container.decodeIfPresent(Int.self, forKey: .completionValueBase) ?? (isCompletedToday ? 1 : 0)
+        unitDisplayName = try container.decodeIfPresent(String.self, forKey: .unitDisplayName)
+        unitBaseScale = try container.decodeIfPresent(Int.self, forKey: .unitBaseScale) ?? 1
+        unitDisplayPrecision = try container.decodeIfPresent(Int.self, forKey: .unitDisplayPrecision) ?? 0
+        unitGoalBaseValue = try container.decodeIfPresent(Int.self, forKey: .unitGoalBaseValue) ?? 1
+        unitDefaultIncrementBaseValue = try container.decodeIfPresent(Int.self, forKey: .unitDefaultIncrementBaseValue) ?? 1
+        scheduleMask = try container.decodeIfPresent(Int.self, forKey: .scheduleMask) ?? 127
+        extraCompletionPolicyRaw = try container.decodeIfPresent(String.self, forKey: .extraCompletionPolicyRaw) ?? "totalsOnly"
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case id
+        case name
+        case iconName
+        case colorName
+        case isCompletedToday
+        case trackingModeRaw
+        case completionValueBase
+        case unitDisplayName
+        case unitBaseScale
+        case unitDisplayPrecision
+        case unitGoalBaseValue
+        case unitDefaultIncrementBaseValue
+        case scheduleMask
+        case extraCompletionPolicyRaw
+    }
 }
 
 struct WidgetPendingToggle: Codable, Hashable {
@@ -62,13 +138,7 @@ enum WidgetSharedStore {
         }
 
         let habit = state.habits[index]
-        let updated = WidgetHabitSnapshot(
-            id: habit.id,
-            name: habit.name,
-            iconName: habit.iconName,
-            colorName: habit.colorName,
-            isCompletedToday: habit.isCompletedToday == false
-        )
+        let updated = toggleSnapshot(habit, dayKey: dayKey)
         state.habits[index] = updated
         state.pendingToggles.append(
             WidgetPendingToggle(habitId: id, dayKey: dayKey, createdAt: Date())
@@ -84,22 +154,49 @@ enum WidgetSharedStore {
                 id: UUID(),
                 name: String(localized: "widget.sample.drink_water"),
                 iconName: "drop",
-                colorName: "Blue",
-                isCompletedToday: true
+                colorName: "Electric Blue",
+                isCompletedToday: false,
+                trackingModeRaw: "unit",
+                completionValueBase: 1500,
+                unitDisplayName: "L",
+                unitBaseScale: 1000,
+                unitDisplayPrecision: 1,
+                unitGoalBaseValue: 2000,
+                unitDefaultIncrementBaseValue: 500,
+                scheduleMask: 127,
+                extraCompletionPolicyRaw: "totalsOnly"
             ),
             WidgetHabitSnapshot(
                 id: UUID(),
                 name: String(localized: "widget.sample.read"),
                 iconName: "book",
-                colorName: "Indigo",
-                isCompletedToday: false
+                colorName: "Neon Purple",
+                isCompletedToday: true,
+                trackingModeRaw: "checkmark",
+                completionValueBase: 1,
+                unitDisplayName: nil,
+                unitBaseScale: 1,
+                unitDisplayPrecision: 0,
+                unitGoalBaseValue: 1,
+                unitDefaultIncrementBaseValue: 1,
+                scheduleMask: 127,
+                extraCompletionPolicyRaw: "totalsOnly"
             ),
             WidgetHabitSnapshot(
                 id: UUID(),
                 name: String(localized: "widget.sample.walk"),
                 iconName: "figure.walk",
-                colorName: "Green",
-                isCompletedToday: false
+                colorName: "Lime Green",
+                isCompletedToday: false,
+                trackingModeRaw: "checkmark",
+                completionValueBase: 0,
+                unitDisplayName: nil,
+                unitBaseScale: 1,
+                unitDisplayPrecision: 0,
+                unitGoalBaseValue: 1,
+                unitDefaultIncrementBaseValue: 1,
+                scheduleMask: 127,
+                extraCompletionPolicyRaw: "totalsOnly"
             )
         ]
     }
@@ -125,4 +222,61 @@ enum WidgetSharedStore {
     private static func emptyState() -> WidgetSharedState {
         WidgetSharedState(habits: [], pendingToggles: [], updatedAt: Date())
     }
+
+    private static func toggleSnapshot(_ habit: WidgetHabitSnapshot, dayKey _: Int) -> WidgetHabitSnapshot {
+        let trackingMode = WidgetTrackingMode(rawValue: habit.trackingModeRaw) ?? .checkmark
+        let goalBase = max(1, habit.unitGoalBaseValue)
+        let incrementBase = max(1, habit.unitDefaultIncrementBaseValue)
+        var completionValue = habit.completionValueBase
+
+        switch trackingMode {
+        case .checkmark:
+            let newCompleted = habit.isCompletedToday == false
+            completionValue = newCompleted ? 1 : 0
+            return WidgetHabitSnapshot(
+                id: habit.id,
+                name: habit.name,
+                iconName: habit.iconName,
+                colorName: habit.colorName,
+                isCompletedToday: newCompleted,
+                trackingModeRaw: habit.trackingModeRaw,
+                completionValueBase: completionValue,
+                unitDisplayName: habit.unitDisplayName,
+                unitBaseScale: habit.unitBaseScale,
+                unitDisplayPrecision: habit.unitDisplayPrecision,
+                unitGoalBaseValue: habit.unitGoalBaseValue,
+                unitDefaultIncrementBaseValue: habit.unitDefaultIncrementBaseValue,
+                scheduleMask: habit.scheduleMask,
+                extraCompletionPolicyRaw: habit.extraCompletionPolicyRaw
+            )
+        case .unit:
+            if completionValue >= goalBase {
+                completionValue = 0
+            } else {
+                completionValue = min(completionValue + incrementBase, goalBase)
+            }
+            let isCompleted = completionValue >= goalBase
+            return WidgetHabitSnapshot(
+                id: habit.id,
+                name: habit.name,
+                iconName: habit.iconName,
+                colorName: habit.colorName,
+                isCompletedToday: isCompleted,
+                trackingModeRaw: habit.trackingModeRaw,
+                completionValueBase: completionValue,
+                unitDisplayName: habit.unitDisplayName,
+                unitBaseScale: habit.unitBaseScale,
+                unitDisplayPrecision: habit.unitDisplayPrecision,
+                unitGoalBaseValue: habit.unitGoalBaseValue,
+                unitDefaultIncrementBaseValue: habit.unitDefaultIncrementBaseValue,
+                scheduleMask: habit.scheduleMask,
+                extraCompletionPolicyRaw: habit.extraCompletionPolicyRaw
+            )
+        }
+    }
+}
+
+enum WidgetTrackingMode: String {
+    case checkmark
+    case unit
 }

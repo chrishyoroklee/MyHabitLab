@@ -10,6 +10,13 @@ struct SettingsView: View {
     @State private var exportDocument: JSONFileDocument?
     @State private var isShowingAlert = false
     @State private var alertMessage = ""
+    @State private var isSyncEnabled = SyncManager.isSyncEnabled
+    @State private var isSyncMigrating = false
+    @State private var pendingSyncValue: Bool?
+    @State private var isShowingSyncConfirm = false
+    @State private var isShowingSyncAlert = false
+    @State private var syncAlertTitle = ""
+    @State private var syncAlertMessage = ""
     @Query(
         filter: #Predicate<Habit> { habit in
             habit.isArchived == true
@@ -21,6 +28,17 @@ struct SettingsView: View {
     var body: some View {
         NavigationStack {
             List {
+                Section("Sync") {
+                    Toggle("Sync with iCloud (Optional)", isOn: syncToggleBinding)
+                        .disabled(isSyncMigrating)
+                    Text("Keeps habits and history in sync across devices. Requires a restart after changes.")
+                        .font(.footnote)
+                        .foregroundStyle(.white.opacity(0.6))
+                    if isSyncMigrating {
+                        ProgressView("Migrating data...")
+                    }
+                }
+                .listRowBackground(AppColors.cardBackground)
                 Section("settings.section.data") {
                     Button("settings.action.export") {
                         Task {
@@ -31,10 +49,11 @@ struct SettingsView: View {
                         isImporting = true
                     }
                 }
+                .listRowBackground(AppColors.cardBackground)
                 Section("settings.section.habits") {
                     if archivedHabits.isEmpty {
                         Text("settings.no_archived")
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(.white.opacity(0.6))
                     } else {
                         ForEach(archivedHabits) { habit in
                             HStack {
@@ -50,10 +69,13 @@ struct SettingsView: View {
                         }
                     }
                 }
+                .listRowBackground(AppColors.cardBackground)
                 Section("settings.section.about") {
                     LabeledContent("settings.about.version", value: versionDescription)
                 }
+                .listRowBackground(AppColors.cardBackground)
             }
+            .foregroundStyle(.white)
             .scrollContentBackground(.hidden) // Remove system default light/gray background
             .background(AppColors.primaryBackground) // Force dark background
 
@@ -87,7 +109,35 @@ struct SettingsView: View {
             } message: {
                 Text(alertMessage)
             }
+            .alert("Sync with iCloud?", isPresented: $isShowingSyncConfirm) {
+                Button("Cancel", role: .cancel) {
+                    pendingSyncValue = nil
+                }
+                Button("Continue") {
+                    guard let pending = pendingSyncValue else { return }
+                    Task {
+                        await applySyncChange(to: pending)
+                    }
+                }
+            } message: {
+                Text("This will migrate your data and requires a restart to take effect.")
+            }
+            .alert(syncAlertTitle, isPresented: $isShowingSyncAlert) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text(syncAlertMessage)
+            }
         }
+    }
+
+    private var syncToggleBinding: Binding<Bool> {
+        Binding(
+            get: { isSyncEnabled },
+            set: { newValue in
+                pendingSyncValue = newValue
+                isShowingSyncConfirm = true
+            }
+        )
     }
 
     private func exportData() async {
@@ -141,5 +191,23 @@ struct SettingsView: View {
         let version = bundle.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0"
         let build = bundle.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "1"
         return "\(version) (\(build))"
+    }
+
+    @MainActor
+    private func applySyncChange(to enabled: Bool) async {
+        isSyncMigrating = true
+        do {
+            try await SyncManager.migrate(to: enabled, context: modelContext)
+            isSyncEnabled = enabled
+            syncAlertTitle = "Restart Required"
+            syncAlertMessage = "Sync settings updated. Restart the app to apply the change."
+        } catch {
+            isSyncEnabled = SyncManager.isSyncEnabled
+            syncAlertTitle = "Sync Failed"
+            syncAlertMessage = "Unable to migrate data: \(error.localizedDescription)"
+        }
+        pendingSyncValue = nil
+        isSyncMigrating = false
+        isShowingSyncAlert = true
     }
 }
