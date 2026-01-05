@@ -27,6 +27,7 @@ struct HabitFormView: View {
     @State private var reminderDrafts: [ReminderDraft] = []
 
     @State private var selectedIconCategory: IconCategory = .health
+    @State private var isShowingIconPicker = false
 
     init(habit: Habit? = nil) {
         self.habitToEdit = habit
@@ -47,6 +48,9 @@ struct HabitFormView: View {
                                 Image(systemName: iconName)
                                     .font(.system(size: 32))
                                     .foregroundStyle(AppColors.color(for: colorName))
+                            }
+                            .onTapGesture {
+                                isShowingIconPicker = true
                             }
 
                             TextField("Name your habit", text: $name)
@@ -256,6 +260,12 @@ struct HabitFormView: View {
             }
             .onAppear {
                 loadHabitIfNeeded()
+            }
+            .sheet(isPresented: $isShowingIconPicker) {
+                IconPickerSheet(
+                    selectedIconCategory: $selectedIconCategory,
+                    iconName: $iconName
+                )
             }
         }
     }
@@ -533,6 +543,55 @@ struct HabitFormView: View {
         guard let index = text.lastIndex(where: { separators.contains($0) }) else { return 0 }
         let decimals = text[text.index(after: index)...]
         return decimals.count
+    }
+}
+
+private struct IconPickerSheet: View {
+    @Environment(\.dismiss) private var dismiss
+    @Binding var selectedIconCategory: IconCategory
+    @Binding var iconName: String
+
+    var body: some View {
+        NavigationStack {
+            VStack(spacing: 16) {
+                Picker("Category", selection: $selectedIconCategory) {
+                    ForEach(IconCategory.allCases) { category in
+                        Text(category.rawValue).tag(category)
+                    }
+                }
+                .pickerStyle(.segmented)
+                .padding(.horizontal)
+
+                ScrollView {
+                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 44), spacing: 16)], spacing: 16) {
+                        ForEach(selectedIconCategory.icons, id: \.self) { icon in
+                            Image(systemName: icon)
+                                .font(.title2)
+                                .foregroundStyle(AppColors.textOnPrimary)
+                                .frame(width: 44, height: 44)
+                                .background(
+                                    Circle()
+                                        .fill(iconName == icon ? AppColors.textOnPrimary.opacity(0.2) : Color.clear)
+                                )
+                                .onTapGesture {
+                                    iconName = icon
+                                    dismiss()
+                                }
+                        }
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 12)
+                }
+            }
+            .background(AppColors.primaryBackgroundGradient)
+            .navigationTitle("Choose Icon")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Close") { dismiss() }
+                }
+            }
+        }
     }
 }
 
