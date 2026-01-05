@@ -69,20 +69,22 @@ struct HabitCardView: View {
                         if isCompletedToday {
                             Circle()
                                 .fill(AppColors.color(for: habit.colorName))
-                                .frame(width: 32, height: 32)
+                                .frame(width: 44, height: 44)
                                 .shadow(color: AppColors.color(for: habit.colorName).opacity(0.5), radius: 8, x: 0, y: 0)
 
                             Image(systemName: "checkmark")
-                                .font(.system(size: 14, weight: .bold))
+                                .font(.system(size: 18, weight: .bold))
                                 .foregroundColor(AppColors.textOnPrimary)
                         } else {
                             Circle()
                                 .stroke(AppColors.color(for: habit.colorName).opacity(0.3), lineWidth: 2)
-                                .frame(width: 32, height: 32)
+                                .frame(width: 44, height: 44)
                         }
                     }
                     .contentTransition(.symbolEffect(.replace))
                 }
+                .frame(width: 64, height: 64)
+                .contentShape(Rectangle())
                 .buttonStyle(.plain)
                 .confetti(counter: $confettiCounter)
             }

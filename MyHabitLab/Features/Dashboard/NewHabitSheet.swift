@@ -27,6 +27,7 @@ struct HabitFormView: View {
     @State private var reminderDrafts: [ReminderDraft] = []
 
     @State private var selectedIconCategory: IconCategory = .health
+    @State private var isShowingIconPicker = false
 
     init(habit: Habit? = nil) {
         self.habitToEdit = habit
@@ -48,6 +49,9 @@ struct HabitFormView: View {
                                     .font(.system(size: 32))
                                     .foregroundStyle(AppColors.color(for: colorName))
                             }
+                            .onTapGesture {
+                                isShowingIconPicker = true
+                            }
 
                             TextField("Name your habit", text: $name)
                                 .font(.title2)
@@ -59,7 +63,11 @@ struct HabitFormView: View {
                     .listRowBackground(Color.clear)
                 }
 
-                Section("Tracking") {
+                Section(
+                    header: Text("Tracking")
+                        .foregroundStyle(AppColors.textOnPrimary)
+                        .fontWeight(.semibold)
+                ) {
                     Picker("Tracking Mode", selection: $trackingMode) {
                         Text("Checkmark").tag(HabitTrackingMode.checkmark)
                         Text("Units").tag(HabitTrackingMode.unit)
@@ -75,7 +83,11 @@ struct HabitFormView: View {
                 .listRowBackground(AppColors.cardBackground)
 
                 if trackingMode == .unit {
-                    Section("Unit Goal") {
+                    Section(
+                        header: Text("Unit Goal")
+                            .foregroundStyle(AppColors.textOnPrimary)
+                            .fontWeight(.semibold)
+                    ) {
                         UnitPresetPicker(
                             presets: UnitPreset.presets,
                             selectedId: $selectedUnitPresetId,
@@ -114,7 +126,11 @@ struct HabitFormView: View {
                     }
                 }
 
-                Section("Schedule") {
+                Section(
+                    header: Text("Schedule")
+                        .foregroundStyle(AppColors.textOnPrimary)
+                        .fontWeight(.semibold)
+                ) {
                     WeekdayPicker(selection: $scheduleSelection)
                     Text("Select the days this habit is due.")
                         .font(.footnote)
@@ -122,7 +138,11 @@ struct HabitFormView: View {
                 }
                 .listRowBackground(AppColors.cardBackground)
 
-                Section("Extra completions") {
+                Section(
+                    header: Text("Extra completions")
+                        .foregroundStyle(AppColors.textOnPrimary)
+                        .fontWeight(.semibold)
+                ) {
                     Picker("Extra completions", selection: $extraCompletionPolicy) {
                         Text("Count toward streaks").tag(ExtraCompletionPolicy.countTowardStreaks)
                         Text("Totals only").tag(ExtraCompletionPolicy.totalsOnly)
@@ -137,7 +157,11 @@ struct HabitFormView: View {
                 }
                 .listRowBackground(AppColors.cardBackground)
 
-                Section("Reminders") {
+                Section(
+                    header: Text("Reminders")
+                        .foregroundStyle(AppColors.textOnPrimary)
+                        .fontWeight(.semibold)
+                ) {
                     if reminderDrafts.isEmpty {
                         Text("No reminders yet")
                             .foregroundStyle(AppColors.textSecondary)
@@ -158,7 +182,11 @@ struct HabitFormView: View {
                 }
                 .listRowBackground(AppColors.cardBackground)
 
-                Section("Appearance") {
+                Section(
+                    header: Text("Appearance")
+                        .foregroundStyle(AppColors.textOnPrimary)
+                        .fontWeight(.semibold)
+                ) {
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 12) {
                             ForEach(AppColors.allColorNames, id: \.self) { color in
@@ -205,7 +233,11 @@ struct HabitFormView: View {
                 }
                 .listRowBackground(AppColors.cardBackground)
 
-                Section("Notes") {
+                Section(
+                    header: Text("Notes")
+                        .foregroundStyle(AppColors.textOnPrimary)
+                        .fontWeight(.semibold)
+                ) {
                     TextField("Motivation...", text: $note, axis: .vertical)
                         .lineLimit(3...6)
                 }
@@ -228,6 +260,12 @@ struct HabitFormView: View {
             }
             .onAppear {
                 loadHabitIfNeeded()
+            }
+            .sheet(isPresented: $isShowingIconPicker) {
+                IconPickerSheet(
+                    selectedIconCategory: $selectedIconCategory,
+                    iconName: $iconName
+                )
             }
         }
     }
@@ -505,6 +543,55 @@ struct HabitFormView: View {
         guard let index = text.lastIndex(where: { separators.contains($0) }) else { return 0 }
         let decimals = text[text.index(after: index)...]
         return decimals.count
+    }
+}
+
+private struct IconPickerSheet: View {
+    @Environment(\.dismiss) private var dismiss
+    @Binding var selectedIconCategory: IconCategory
+    @Binding var iconName: String
+
+    var body: some View {
+        NavigationStack {
+            VStack(spacing: 16) {
+                Picker("Category", selection: $selectedIconCategory) {
+                    ForEach(IconCategory.allCases) { category in
+                        Text(category.rawValue).tag(category)
+                    }
+                }
+                .pickerStyle(.segmented)
+                .padding(.horizontal)
+
+                ScrollView {
+                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 44), spacing: 16)], spacing: 16) {
+                        ForEach(selectedIconCategory.icons, id: \.self) { icon in
+                            Image(systemName: icon)
+                                .font(.title2)
+                                .foregroundStyle(AppColors.textOnPrimary)
+                                .frame(width: 44, height: 44)
+                                .background(
+                                    Circle()
+                                        .fill(iconName == icon ? AppColors.textOnPrimary.opacity(0.2) : Color.clear)
+                                )
+                                .onTapGesture {
+                                    iconName = icon
+                                    dismiss()
+                                }
+                        }
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 12)
+                }
+            }
+            .background(AppColors.primaryBackgroundGradient)
+            .navigationTitle("Choose Icon")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Close") { dismiss() }
+                }
+            }
+        }
     }
 }
 

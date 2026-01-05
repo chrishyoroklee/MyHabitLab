@@ -3,6 +3,7 @@ import SwiftData
 
 struct DashboardView: View {
     let dateProvider: DateProvider
+    let onSettingsTapped: () -> Void
     @Environment(\.modelContext) private var modelContext
     @Environment(\.scenePhase) private var scenePhase
     @Query(
@@ -12,7 +13,6 @@ struct DashboardView: View {
         sort: \Habit.createdAt
     )
     private var habits: [Habit]
-    @State private var isPresentingNewHabit = false
     @State private var editingHabit: Habit?
     @State private var detailHabit: Habit?
     @State private var todayKey: Int = 0
@@ -81,6 +81,11 @@ struct DashboardView: View {
                                     } label: {
                                         Label("dashboard.action.edit_history", systemImage: "calendar")
                                     }
+                                    Button(role: .destructive) {
+                                        moveToTrash(habit)
+                                    } label: {
+                                        Label("Move to Trash", systemImage: "trash")
+                                    }
                                 }
                             }
                         }
@@ -100,17 +105,12 @@ struct DashboardView: View {
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
-                        isPresentingNewHabit = true
+                        onSettingsTapped()
                     } label: {
-                        Image(systemName: "plus")
+                        Image(systemName: "gearshape.fill")
                     }
-                    .accessibilityLabel(Text("dashboard.action.new_habit"))
+                    .accessibilityLabel(Text("settings.title"))
                 }
-            }
-            .sheet(isPresented: $isPresentingNewHabit, onDismiss: {
-                refreshCompletions()
-            }) {
-                HabitFormView()
             }
             .sheet(item: $editingHabit, onDismiss: {
                 refreshCompletions()
@@ -179,5 +179,18 @@ struct DashboardView: View {
         }
 
         return HabitCompletionService.isComplete(habit: habit, completion: completion)
+    }
+
+    private func moveToTrash(_ habit: Habit) {
+        habit.isArchived = true
+        do {
+            try modelContext.save()
+            WidgetStoreSync.updateSnapshot(
+                context: modelContext,
+                dayKey: dateProvider.dayKey()
+            )
+        } catch {
+            assertionFailure("Failed to move habit to trash: \(error)")
+        }
     }
 }

@@ -15,6 +15,8 @@ struct SettingsView: View {
     @State private var pendingSyncValue: Bool?
     @State private var isShowingSyncConfirm = false
     @State private var isShowingSyncAlert = false
+    @State private var isShowingTrash = false
+    @State private var habitPendingDelete: Habit?
     @State private var syncAlertTitle = ""
     @State private var syncAlertMessage = ""
     @Query(
@@ -28,7 +30,11 @@ struct SettingsView: View {
     var body: some View {
         NavigationStack {
             List {
-                Section("Sync") {
+                Section(
+                    header: Text("Sync")
+                        .foregroundStyle(AppColors.textOnPrimary)
+                        .fontWeight(.semibold)
+                ) {
                     Toggle("Sync with iCloud (Optional)", isOn: syncToggleBinding)
                         .disabled(isSyncMigrating)
                     Text("Keeps habits and history in sync across devices. Requires a restart after changes.")
@@ -39,7 +45,11 @@ struct SettingsView: View {
                     }
                 }
                 .listRowBackground(AppColors.cardBackground)
-                Section("settings.section.data") {
+                Section(
+                    header: Text("settings.section.data")
+                        .foregroundStyle(AppColors.textOnPrimary)
+                        .fontWeight(.semibold)
+                ) {
                     Button("settings.action.export") {
                         Task {
                             await exportData()
@@ -50,27 +60,21 @@ struct SettingsView: View {
                     }
                 }
                 .listRowBackground(AppColors.cardBackground)
-                Section("settings.section.habits") {
-                    if archivedHabits.isEmpty {
-                        Text("settings.no_archived")
-                            .foregroundStyle(AppColors.textSecondary)
-                    } else {
-                        ForEach(archivedHabits) { habit in
-                            HStack {
-                                Text(habit.name)
-                                    .lineLimit(2)
-                                    .layoutPriority(1)
-                                Spacer()
-                                Button("settings.action.restore") {
-                                    restore(habit)
-                                }
-                                .buttonStyle(.bordered)
-                            }
-                        }
+                Section(
+                    header: Text("Trash")
+                        .foregroundStyle(AppColors.textOnPrimary)
+                        .fontWeight(.semibold)
+                ) {
+                    Button("Open Trash") {
+                        isShowingTrash = true
                     }
                 }
                 .listRowBackground(AppColors.cardBackground)
-                Section("settings.section.about") {
+                Section(
+                    header: Text("settings.section.about")
+                        .foregroundStyle(AppColors.textOnPrimary)
+                        .fontWeight(.semibold)
+                ) {
                     LabeledContent("settings.about.version", value: versionDescription)
                 }
                 .listRowBackground(AppColors.cardBackground)
@@ -127,6 +131,67 @@ struct SettingsView: View {
             } message: {
                 Text(syncAlertMessage)
             }
+            .sheet(isPresented: $isShowingTrash) {
+                NavigationStack {
+                    List {
+                        if archivedHabits.isEmpty {
+                            Text("settings.no_archived")
+                                .foregroundStyle(AppColors.textSecondary)
+                                .listRowBackground(AppColors.cardBackground)
+                        } else {
+                            ForEach(archivedHabits) { habit in
+                                HStack {
+                                    Text(habit.name)
+                                        .lineLimit(2)
+                                        .layoutPriority(1)
+                                    Spacer()
+                                    Button("settings.action.restore") {
+                                        restore(habit)
+                                    }
+                                    .buttonStyle(.bordered)
+                                    Button(role: .destructive) {
+                                        habitPendingDelete = habit
+                                    } label: {
+                                        Text("Delete")
+                                    }
+                                    .buttonStyle(.bordered)
+                                }
+                                .listRowBackground(AppColors.cardBackground)
+                            }
+                        }
+                    }
+                    .scrollContentBackground(.hidden)
+                    .foregroundStyle(AppColors.textPrimary)
+                    .background(AppColors.primaryBackgroundGradient)
+                    .navigationTitle("Trash")
+                    .navigationBarTitleDisplayMode(.inline)
+                    .toolbar {
+                        ToolbarItem(placement: .cancellationAction) {
+                            Button("Close") {
+                                isShowingTrash = false
+                            }
+                        }
+                    }
+                    .alert("Delete habit permanently?", isPresented: .init(
+                        get: { habitPendingDelete != nil },
+                        set: { isPresented in
+                            if !isPresented { habitPendingDelete = nil }
+                        }
+                    )) {
+                        Button("Cancel", role: .cancel) {
+                            habitPendingDelete = nil
+                        }
+                        Button("Delete", role: .destructive) {
+                            if let habit = habitPendingDelete {
+                                deletePermanently(habit)
+                            }
+                            habitPendingDelete = nil
+                        }
+                    } message: {
+                        Text("This removes the habit and its history forever.")
+                    }
+                }
+            }
         }
     }
 
@@ -180,6 +245,20 @@ struct SettingsView: View {
             Task {
                 await ReminderScheduler.update(for: habit)
             }
+        } catch {
+            alertMessage = String(format: String(localized: "error.restore_failed"), error.localizedDescription)
+            isShowingAlert = true
+        }
+    }
+
+    private func deletePermanently(_ habit: Habit) {
+        modelContext.delete(habit)
+        do {
+            try modelContext.save()
+            WidgetStoreSync.updateSnapshot(
+                context: modelContext,
+                dayKey: DayKey.from(Date())
+            )
         } catch {
             alertMessage = String(format: String(localized: "error.restore_failed"), error.localizedDescription)
             isShowingAlert = true
