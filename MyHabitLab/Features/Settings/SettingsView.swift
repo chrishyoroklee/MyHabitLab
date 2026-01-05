@@ -28,7 +28,11 @@ struct SettingsView: View {
     var body: some View {
         NavigationStack {
             List {
-                Section("Sync") {
+                Section(
+                    header: Text("Sync")
+                        .foregroundStyle(AppColors.textOnPrimary)
+                        .fontWeight(.semibold)
+                ) {
                     Toggle("Sync with iCloud (Optional)", isOn: syncToggleBinding)
                         .disabled(isSyncMigrating)
                     Text("Keeps habits and history in sync across devices. Requires a restart after changes.")
@@ -39,7 +43,11 @@ struct SettingsView: View {
                     }
                 }
                 .listRowBackground(AppColors.cardBackground)
-                Section("settings.section.data") {
+                Section(
+                    header: Text("settings.section.data")
+                        .foregroundStyle(AppColors.textOnPrimary)
+                        .fontWeight(.semibold)
+                ) {
                     Button("settings.action.export") {
                         Task {
                             await exportData()
@@ -50,7 +58,11 @@ struct SettingsView: View {
                     }
                 }
                 .listRowBackground(AppColors.cardBackground)
-                Section("settings.section.habits") {
+                Section(
+                    header: Text("settings.section.habits")
+                        .foregroundStyle(AppColors.textOnPrimary)
+                        .fontWeight(.semibold)
+                ) {
                     if archivedHabits.isEmpty {
                         Text("settings.no_archived")
                             .foregroundStyle(AppColors.textSecondary)
@@ -70,7 +82,11 @@ struct SettingsView: View {
                     }
                 }
                 .listRowBackground(AppColors.cardBackground)
-                Section("settings.section.about") {
+                Section(
+                    header: Text("settings.section.about")
+                        .foregroundStyle(AppColors.textOnPrimary)
+                        .fontWeight(.semibold)
+                ) {
                     LabeledContent("settings.about.version", value: versionDescription)
                 }
                 .listRowBackground(AppColors.cardBackground)

@@ -59,7 +59,11 @@ struct HabitFormView: View {
                     .listRowBackground(Color.clear)
                 }
 
-                Section("Tracking") {
+                Section(
+                    header: Text("Tracking")
+                        .foregroundStyle(AppColors.textOnPrimary)
+                        .fontWeight(.semibold)
+                ) {
                     Picker("Tracking Mode", selection: $trackingMode) {
                         Text("Checkmark").tag(HabitTrackingMode.checkmark)
                         Text("Units").tag(HabitTrackingMode.unit)
@@ -75,7 +79,11 @@ struct HabitFormView: View {
                 .listRowBackground(AppColors.cardBackground)
 
                 if trackingMode == .unit {
-                    Section("Unit Goal") {
+                    Section(
+                        header: Text("Unit Goal")
+                            .foregroundStyle(AppColors.textOnPrimary)
+                            .fontWeight(.semibold)
+                    ) {
                         UnitPresetPicker(
                             presets: UnitPreset.presets,
                             selectedId: $selectedUnitPresetId,
@@ -114,7 +122,11 @@ struct HabitFormView: View {
                     }
                 }
 
-                Section("Schedule") {
+                Section(
+                    header: Text("Schedule")
+                        .foregroundStyle(AppColors.textOnPrimary)
+                        .fontWeight(.semibold)
+                ) {
                     WeekdayPicker(selection: $scheduleSelection)
                     Text("Select the days this habit is due.")
                         .font(.footnote)
@@ -122,7 +134,11 @@ struct HabitFormView: View {
                 }
                 .listRowBackground(AppColors.cardBackground)
 
-                Section("Extra completions") {
+                Section(
+                    header: Text("Extra completions")
+                        .foregroundStyle(AppColors.textOnPrimary)
+                        .fontWeight(.semibold)
+                ) {
                     Picker("Extra completions", selection: $extraCompletionPolicy) {
                         Text("Count toward streaks").tag(ExtraCompletionPolicy.countTowardStreaks)
                         Text("Totals only").tag(ExtraCompletionPolicy.totalsOnly)
@@ -137,7 +153,11 @@ struct HabitFormView: View {
                 }
                 .listRowBackground(AppColors.cardBackground)
 
-                Section("Reminders") {
+                Section(
+                    header: Text("Reminders")
+                        .foregroundStyle(AppColors.textOnPrimary)
+                        .fontWeight(.semibold)
+                ) {
                     if reminderDrafts.isEmpty {
                         Text("No reminders yet")
                             .foregroundStyle(AppColors.textSecondary)
@@ -158,7 +178,11 @@ struct HabitFormView: View {
                 }
                 .listRowBackground(AppColors.cardBackground)
 
-                Section("Appearance") {
+                Section(
+                    header: Text("Appearance")
+                        .foregroundStyle(AppColors.textOnPrimary)
+                        .fontWeight(.semibold)
+                ) {
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 12) {
                             ForEach(AppColors.allColorNames, id: \.self) { color in
@@ -205,7 +229,11 @@ struct HabitFormView: View {
                 }
                 .listRowBackground(AppColors.cardBackground)
 
-                Section("Notes") {
+                Section(
+                    header: Text("Notes")
+                        .foregroundStyle(AppColors.textOnPrimary)
+                        .fontWeight(.semibold)
+                ) {
                     TextField("Motivation...", text: $note, axis: .vertical)
                         .lineLimit(3...6)
                 }
