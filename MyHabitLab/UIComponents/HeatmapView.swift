@@ -18,6 +18,10 @@ struct ContributionGraphView: View {
                         RoundedRectangle(cornerRadius: 2)
                             .fill(fillColor(for: date))
                             .frame(width: blockSize, height: blockSize)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 2)
+                                    .stroke(AppColors.textSecondary.opacity(0.18), lineWidth: 0.5)
+                            )
                     }
                 }
             }
@@ -39,9 +43,9 @@ struct ContributionGraphView: View {
         let isCompleted = completedDayKeys.contains(dayKey)
 
         if date > Date() {
-            return Color.secondary.opacity(0.05)
+            return AppColors.textSecondary.opacity(0.08)
         }
 
-        return isCompleted ? color : Color.secondary.opacity(0.1)
+        return isCompleted ? color : AppColors.textSecondary.opacity(0.2)
     }
 }
