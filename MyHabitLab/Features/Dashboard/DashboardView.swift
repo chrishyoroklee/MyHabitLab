@@ -81,6 +81,11 @@ struct DashboardView: View {
                                     } label: {
                                         Label("dashboard.action.edit_history", systemImage: "calendar")
                                     }
+                                    Button(role: .destructive) {
+                                        moveToTrash(habit)
+                                    } label: {
+                                        Label("Move to Trash", systemImage: "trash")
+                                    }
                                 }
                             }
                         }
@@ -174,5 +179,18 @@ struct DashboardView: View {
         }
 
         return HabitCompletionService.isComplete(habit: habit, completion: completion)
+    }
+
+    private func moveToTrash(_ habit: Habit) {
+        habit.isArchived = true
+        do {
+            try modelContext.save()
+            WidgetStoreSync.updateSnapshot(
+                context: modelContext,
+                dayKey: dateProvider.dayKey()
+            )
+        } catch {
+            assertionFailure("Failed to move habit to trash: \(error)")
+        }
     }
 }
